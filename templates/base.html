@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Электролизёр{% endblock %}</title>
+    <!-- Add any additional stylesheets or scripts here -->
+    {% block extra_css %}{% endblock %}
+    {% block extra_js %}{% endblock %}
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="{% url 'index' %}">Главная</a>
+            <a href="{% url 'upload_file' %}">Загрузить файл</a>
+{#            <a href="{% url 'forecasting' %}">Forecasting</a>#}
+{#            <a href="{% url 'results' %}">Results</a>#}
+        </nav>
+    </header>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <p>&copy; 2023 Electrolyzer Overhaul Forecasting</p>
+    </footer>
+</body>
+</html>

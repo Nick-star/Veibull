@@ -1,11 +1,13 @@
 import pandas as pd
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from .forms import UploadFileForm
 from .models import Electrolyzer
+from django.core import serializers
 
 
 def upload_file(request):
+    message = None
     if request.method == 'POST':
         form = UploadFileForm(request.POST, request.FILES)
         try:
@@ -18,7 +20,7 @@ def upload_file(request):
                 elif file_extension in ['xls', 'xlsx']:
                     data = pd.read_excel(file)
                 else:
-                    return JsonResponse({'error': 'Invalid file format'})
+                    message = f"Недоступимый формат файла"
 
                 # Extract data and save Electrolyzer instances
                 for index, row in data.iterrows():
@@ -31,15 +33,25 @@ def upload_file(request):
                     )
                     electrolyzer.save()
 
-                return JsonResponse({'message': 'Data imported successfully'})
+                return redirect('chart')
         except Exception as e:
-            return JsonResponse({'error': f"An error occurred while processing the file: {str(e)}"})
+            message = f"Ошибка во время обработки файла: {str(e)}"
 
     else:
         form = UploadFileForm()
 
-    return render(request, 'upload_file.html', {'form': form})
+    return render(request, 'upload_file.html', {'form': form, 'message': message})
 
 
 def index(request):
     return render(request, 'index.html')
+
+
+def chart(request):
+    return render(request, 'chart.html')
+
+
+def get_electrolyzer_data(request):
+    electrolyzers = Electrolyzer.objects.all()
+    data = serializers.serialize('json', electrolyzers)
+    return JsonResponse(data, safe=False)

@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="container">
+    <h1 class="mt-4 mb-4">Диаграмма срока службы электролизера</h1>
+    <label for="electrolyzer-select">Выберите электролизёры:</label>
+    <select id="electrolyzer-select" multiple>
+      <!-- The electrolyzer options will be populated via JavaScript -->
+    </select>
+    <div id="chart"></div>
+  </div>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      let electrolyzers;
+
+      // Fetch data from the server
+      $.getJSON("{% url 'get_electrolyzer_data' %}", function(data) {
+        electrolyzers = JSON.parse(data);
+        for (let i = 0; i < electrolyzers.length; i++) {
+          let opt = $('<option></option>').attr('value', electrolyzers[i].fields.electrolyzer_number).text(electrolyzers[i].fields.electrolyzer_number);
+          $('#electrolyzer-select').append(opt);
+        }
+        updateChart();
+      });
+
+      // Helper function to update the chart
+      function updateChart() {
+        let selected_electrolyzers = $('#electrolyzer-select').val() || [];
+
+        let x_values = [];
+        let y_values = [];
+
+        for (let i = 0; i < electrolyzers.length; i++) {
+          if (selected_electrolyzers.includes(String(electrolyzers[i].fields.electrolyzer_number))) {
+            x_values.push(electrolyzers[i].fields.average_lifetime);
+            y_values.push((i + 1) / electrolyzers.length * 100);
+          }
+        }
+
+        let trace = {
+          x: x_values,
+          y: y_values,
+          mode: 'markers',
+          type: 'scatter'
+        };
+
+        let layout = {
+          xaxis: { title: 'Average Lifetime' },
+          yaxis: { title: 'Percentage' },
+          title: 'Electrolyzer Lifetime Chart'
+        };
+
+        let data = [trace];
+
+        Plotly.newPlot('chart', data, layout);
+      }
+
+      // Update the chart when the dropdown selection changes
+      $('#electrolyzer-select').on('change', updateChart);
+    });
+  </script>
+{% endblock %}

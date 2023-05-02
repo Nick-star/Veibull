@@ -1,9 +1,12 @@
 import pandas as pd
+import numpy as np
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from .forms import UploadFileForm
 from .models import Electrolyzer
 from django.core import serializers
+from scipy.optimize import curve_fit
+from scipy.stats import weibull_min
 
 
 def upload_file(request):
@@ -54,4 +57,19 @@ def chart(request):
 def get_electrolyzer_data(request):
     electrolyzers = Electrolyzer.objects.all()
     data = serializers.serialize('json', electrolyzers)
-    return JsonResponse(data, safe=False)
+
+    # Extract average_lifetime values
+    lifetimes = [e.average_lifetime for e in electrolyzers]
+
+    # Fit the Weibull distribution parameters
+    def weibull_cdf(x, shape, scale):
+        return 1 - np.exp(-(x / scale) ** shape)
+
+    shape, scale = curve_fit(weibull_cdf, sorted(lifetimes), np.linspace(0, 1, len(lifetimes)), p0=[1, 50000])[0]
+
+    response = {
+        'electrolyzers': data,
+        'weibull_params': {'shape': shape, 'scale': scale}
+    }
+
+    return JsonResponse(response, safe=False)

@@ -12,53 +12,82 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   <script>
-    $(document).ready(function() {
-      let electrolyzers;
+    let electrolyzers;
 
-      // Fetch data from the server
-      $.getJSON("{% url 'get_electrolyzer_data' %}", function(data) {
-        electrolyzers = JSON.parse(data);
-        for (let i = 0; i < electrolyzers.length; i++) {
-          let opt = $('<option></option>').attr('value', electrolyzers[i].fields.electrolyzer_number).text(electrolyzers[i].fields.electrolyzer_number);
-          $('#electrolyzer-select').append(opt);
+    // Fetch data from the server
+    $.getJSON("{% url 'get_electrolyzer_data' %}", function(response) {
+      electrolyzers = JSON.parse(response.electrolyzers);
+      let weibull_params = response.weibull_params;
+
+      for (let i = 0; i < electrolyzers.length; i++) {
+        let opt = $('<option></option>').attr('value', electrolyzers[i].fields.electrolyzer_number).text(electrolyzers[i].fields.electrolyzer_number);
+        $('#electrolyzer-select').append(opt);
+      }
+      updateChart(weibull_params);
+    });
+
+    // Helper function to update the chart
+    function updateChart(weibull_params) {
+      let selected = $('#electrolyzer-select').val();
+      let x = [];
+      let y = [];
+
+      for (let i = 0; i < electrolyzers.length; i++) {
+        if (selected.includes(electrolyzers[i].fields.electrolyzer_number.toString())) {
+          x.push(electrolyzers[i].fields.electrolyzer_number);
+          y.push(electrolyzers[i].fields.average_lifetime);
         }
-        updateChart();
-      });
-
-      // Helper function to update the chart
-      function updateChart() {
-        let selected_electrolyzers = $('#electrolyzer-select').val() || [];
-
-        let x_values = [];
-        let y_values = [];
-
-        for (let i = 0; i < electrolyzers.length; i++) {
-          if (selected_electrolyzers.includes(String(electrolyzers[i].fields.electrolyzer_number))) {
-            x_values.push(electrolyzers[i].fields.average_lifetime);
-            y_values.push((i + 1) / electrolyzers.length * 100);
-          }
-        }
-
-        let trace = {
-          x: x_values,
-          y: y_values,
-          mode: 'markers',
-          type: 'scatter'
-        };
-
-        let layout = {
-          xaxis: { title: 'Average Lifetime' },
-          yaxis: { title: 'Percentage' },
-          title: 'Electrolyzer Lifetime Chart'
-        };
-
-        let data = [trace];
-
-        Plotly.newPlot('chart', data, layout);
       }
 
-      // Update the chart when the dropdown selection changes
-      $('#electrolyzer-select').on('change', updateChart);
-    });
+      let trace = {
+        x: x,
+        y: y,
+        mode: 'markers',
+        type: 'scatter',
+        name: 'Electrolyzer Lifetime',
+        marker: { size: 12 }
+      };
+
+      // Calculate Weibull CDF
+      function weibull_cdf(x, shape, scale) {
+        return 1 - Math.exp(-1 * (x / scale) ** shape);
+      }
+
+      // Generate Weibull CDF data
+      let x_weibull = [];
+      let y_weibull = [];
+
+      for (let x = 0; x <= 100000; x += 1000) {
+        x_weibull.push(x);
+        y_weibull.push(weibull_cdf(x, weibull_params.shape, weibull_params.scale) * 100);
+      }
+
+      let weibull_trace = {
+        x: x_weibull,
+        y: y_weibull,
+        mode: 'lines',
+        name: 'Weibull Prediction',
+        line: { color: 'red', width: 2 }
+      };
+
+      let data = [trace, weibull_trace];
+
+      let layout = {
+        title: 'Electrolyzer Lifetime',
+        xaxis: { title: 'Electrolyzer Number' },
+        yaxis: { title: 'Average Lifetime' }
+      };
+
+      Plotly.newPlot('chart', data, layout);
+    }
+
+    // Update chart when the selection changes
+    $('#electrolyzer-select').on('change', function() {
+  $.getJSON("{% url 'get_electrolyzer_data' %}", function(response) {
+    let weibull_params = response.weibull_params;
+    updateChart(weibull_params);
+  });
+});
+
   </script>
 {% endblock %}

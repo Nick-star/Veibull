@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Главная</title>
+</head>
+<body>
+    <a href="#" class="dates">Введите данные <img src="/vector.svg" alt=""></a>
+  <div class="modal" data-modal="one">
+    <div class="modal__wrapper">
+      <div class="modal__body">
+        <div class="modal__inner">
+        <form action="" method="post">
+          <div>
+            <label>Завод</label>
+            <input type="text" value="КрАЗ" disabled>
+          </div>
+          <div >
+            <label>Корпус</label>
+            <select class="corpus">
+              <option value="">Выберите ...</option>
+              <option>1</option>
+              <option>2</option>
+              <option>3</option>
+              <option>4</option>
+             </select>
+          </div>
+          <div>
+              <label>Тип</label>
+             <select class="type" id="diff">
+              <option value="">Выберите ...</option>
+              <option>1</option>
+              <option>2</option>
+              <option>3</option>
+              <option>4</option>
+             </select>
+            </div>
+            <div>
+              <label>Дата, на которую рассчитать вперёд</label>
+              <input type="date" value="" id="diff">
+            </div>
+            <div>
+              <label>С</label>
+              <input type="date" value="">
+            </div>
+            <div>
+              <label>По</label>
+              <input type="date" value="">
+            </div>
+            <div>
+              <label>&nbsp;</label>
+              <input type="submit" value="Обновить" id="submit">
+            </div>
+        </form>           
+      </div>
+      </div>
+    </div>
+</div>
+  </div>
+    <section>
+      <div id="chart">
+        <canvas id="myChart" width="1211px" height="500px"></canvas>
+      </div>
+    </section>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

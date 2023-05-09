@@ -1,0 +1,95 @@
+body {
+    padding-left: 30px;
+}
+*, *::before, *::after {
+    box-sizing: border-box;
+  }
+html, input, select {
+    font-family: "Inter", sans-serif;
+    font-size: 20px;
+    color: #0000008A;
+}
+input, label {
+    display:block;
+}
+input, select {
+    outline: none;
+    padding-left: 10px;
+    width: 175px;
+    height: 52px;
+    border-radius: 20px;
+    border: 2px solid #BB6A0C;
+}
+form, #chart {
+    padding-top: 20px;
+}
+.modal { 
+    visibility: hidden; /* скрываем модальное окно */
+    opacity: 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: block;
+    padding-left: 30px;
+    transition: visibility 0s 0.1s, opacity 0.1s; /*плавнsq переход*/
+}
+.modal_active { /* активный класс модального окна */
+    opacity: 1;
+    visibility: visible;
+    transition: visibility 0s 0s, opacity 0.1s; /* добавляем для плавного перехода */
+}
+.modal__wrapper { /* блок обертка для центрирования контентной части модального окна */
+    display: flex;
+    align-items: center;
+    margin-top: 40px;
+}
+.modal__body { 
+    position: relative;
+    background: #FFFFFF;
+    border: 2px solid #BB6A0C ;
+    border-radius: 30px;
+    width: 500px;
+    height: 535px;
+}
+.modal__inner { 
+    display: flex;
+    flex-direction: column;
+    margin: 10px 50px;
+}
+form {
+    width: 100%;
+}
+form div {
+    padding: 10px;
+    display: inline-block;
+}
+#diff {
+    width: 375px;
+}
+#submit {
+    padding-right: 10px;
+    background-color: #BB6A0C ;
+    color: #FFFFFF;
+}
+select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("/vector.svg");
+    background-repeat: no-repeat;
+   background-position-y: 50%;
+
+}
+.corpus {
+    background-position-x: 95%;
+}
+.type {
+    background-position-x: 98%;
+}
+a {
+    text-decoration: none;
+    color:  #000000B2;
+    ;
+}

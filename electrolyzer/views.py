@@ -65,8 +65,7 @@ def get_electrolyzer_data(request):
     def weibull_cdf(x, shape, scale):
         return 1 - np.exp(-(x / scale) ** shape)
 
-    shape, scale = curve_fit(weibull_cdf, sorted(lifetimes), np.linspace(0, 1, len(lifetimes)), p0=[1, 50000])[0]
-
+    shape, scale = curve_fit(weibull_cdf, max(lifetimes), np.linspace(0, 1, len(lifetimes)), p0=[1, 50])[0]
     response = {
         'electrolyzers': data,
         'weibull_params': {'shape': shape, 'scale': scale}

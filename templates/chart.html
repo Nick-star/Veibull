@@ -3,7 +3,7 @@
 {% block content %}
   <div class="container">
     <h1 class="mt-4 mb-4">Диаграмма срока службы электролизера</h1>
-    <label for="electrolyzer-select">Выберите электролизёры:</label>
+    <label for="electrolyzer-select">Выберите электролизёр:</label>
     <select id="electrolyzer-select" multiple>
       <!-- The electrolyzer options will be populated via JavaScript -->
     </select>
@@ -12,82 +12,74 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   <script>
-    let electrolyzers;
+  let electrolyzers;
+  let weibull_cdf;
+  let empirical_cdf;
 
-    // Fetch data from the server
-    $.getJSON("{% url 'get_electrolyzer_data' %}", function(response) {
-      electrolyzers = JSON.parse(response.electrolyzers);
-      let weibull_params = response.weibull_params;
+  // Fetch data from the server
+  $.getJSON("{% url 'get_electrolyzer_data' %}", function(response) {
+      console.log(response)
+    electrolyzers = JSON.parse(response.electrolyzers);
+    weibull_cdf = response.weibull_cdf;
+    empirical_cdf = response.empirical_cdf;
 
-      for (let i = 0; i < electrolyzers.length; i++) {
-        let opt = $('<option></option>').attr('value', electrolyzers[i].fields.electrolyzer_number).text(electrolyzers[i].fields.electrolyzer_number);
-        $('#electrolyzer-select').append(opt);
+    for (let i = 0; i < electrolyzers.length; i++) {
+      let opt = $('<option></option>').attr('value', electrolyzers[i].fields.electrolyzer_number).text(electrolyzers[i].fields.electrolyzer_number);
+      $('#electrolyzer-select').append(opt);
+    }
+    updateChart();
+  });
+
+  // Helper function to update the chart
+  function updateChart() {
+    let selected = $('#electrolyzer-select').val();
+    let x = [];
+    let y = [];
+
+    for (let i = 0; i < electrolyzers.length; i++) {
+      if (selected.includes(electrolyzers[i].fields.electrolyzer_number.toString())) {
+        x.push(electrolyzers[i].fields.electrolyzer_number);
+        y.push(electrolyzers[i].fields.shutdown_life);
       }
-      updateChart(weibull_params);
-    });
-
-    // Helper function to update the chart
-    function updateChart(weibull_params) {
-      let selected = $('#electrolyzer-select').val();
-      let x = [];
-      let y = [];
-
-      for (let i = 0; i < electrolyzers.length; i++) {
-        if (selected.includes(electrolyzers[i].fields.electrolyzer_number.toString())) {
-          x.push(electrolyzers[i].fields.electrolyzer_number);
-          y.push(electrolyzers[i].fields.average_lifetime);
-        }
-      }
-
-      let trace = {
-        x: x,
-        y: y,
-        mode: 'markers',
-        type: 'scatter',
-        name: 'Electrolyzer Lifetime',
-        marker: { size: 12 }
-      };
-
-      // Calculate Weibull CDF
-      function weibull_cdf(x, shape, scale) {
-        return 1 - Math.exp(-1 * (x / scale) ** shape);
-      }
-
-      // Generate Weibull CDF data
-      let x_weibull = [];
-      let y_weibull = [];
-
-      for (let x = 0; x <= 100000; x += 1000) {
-        x_weibull.push(x);
-        y_weibull.push(weibull_cdf(x, weibull_params.shape, weibull_params.scale) * 100);
-      }
-
-      let weibull_trace = {
-        x: x_weibull,
-        y: y_weibull,
-        mode: 'lines',
-        name: 'Weibull Prediction',
-        line: { color: 'red', width: 2 }
-      };
-
-      let data = [trace, weibull_trace];
-
-      let layout = {
-        title: 'Electrolyzer Lifetime',
-        xaxis: { title: 'Electrolyzer Number' },
-        yaxis: { title: 'Average Lifetime' }
-      };
-
-      Plotly.newPlot('chart', data, layout);
     }
 
-    // Update chart when the selection changes
-    $('#electrolyzer-select').on('change', function() {
-  $.getJSON("{% url 'get_electrolyzer_data' %}", function(response) {
-    let weibull_params = response.weibull_params;
-    updateChart(weibull_params);
-  });
-});
+    let trace1 = {
+      x: x,
+      y: y,
+      mode: 'markers',
+      type: 'scatter',
+      name: 'Electrolyzer Lifetimes',
+      marker: { size: 12 }
+    };
 
-  </script>
+    let trace2 = {
+      x: weibull_cdf.x,
+      y: weibull_cdf.y,
+      mode: 'lines',
+      name: 'Weibull Distribution',
+      line: { color: 'red', width: 2 }
+    };
+
+    let trace3 = {
+      x: empirical_cdf.x,
+      y: empirical_cdf.y,
+      mode: 'lines',
+      name: 'Empirical CDF',
+      line: { color: 'blue', width: 2 }
+    };
+
+    let data = [trace1, trace2, trace3];
+
+    let layout = {
+      title: 'Electrolyzer Lifetime',
+      xaxis: { title: 'Days' },
+      yaxis: { title: 'CDF' }
+    };
+
+    Plotly.newPlot('chart', data, layout);
+  }
+
+  // Update chart when the selection changes
+  $('#electrolyzer-select').on('change', updateChart);
+</script>
 {% endblock %}

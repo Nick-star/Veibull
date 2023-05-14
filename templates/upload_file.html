@@ -9,12 +9,27 @@
       <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="mb-3">
-          {{ form.file.label_tag }}
-          {{ form.file|add_class:"form-control" }}
-          {% if form.file.errors %}
-            <div class="invalid-feedback d-block">{{ form.file.errors|join:", " }}</div>
-          {% endif %}
-        </div>
+  {{ form.file.label_tag }}
+  {{ form.file|add_class:"form-control" }}
+  {% if form.file.errors %}
+    <div class="invalid-feedback d-block">{{ form.file.errors|join:", " }}</div>
+  {% endif %}
+</div>
+<div class="mb-3">
+  {{ form.electrolyzer_type.label_tag }}
+  {{ form.electrolyzer_type|add_class:"form-control" }}
+  {% if form.electrolyzer_type.errors %}
+    <div class="invalid-feedback d-block">{{ form.electrolyzer_type.errors|join:", " }}</div>
+  {% endif %}
+</div>
+<div class="mb-3">
+  {{ form.building.label_tag }}
+  {{ form.building|add_class:"form-control" }}
+  {% if form.building.errors %}
+    <div class="invalid-feedback d-block">{{ form.building.errors|join:", " }}</div>
+  {% endif %}
+</div>
+
         <button type="submit" class="btn btn-primary">Загрузить</button>
       </form>
         {% if message %}

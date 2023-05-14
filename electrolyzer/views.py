@@ -3,7 +3,7 @@ import numpy as np
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from .forms import UploadFileForm
-from .models import Electrolyzer
+from .models import Electrolyzer, ElectrolyzerType, Building
 from django.core import serializers
 from scipy.optimize import curve_fit
 from scipy.stats import weibull_min
@@ -18,21 +18,25 @@ def upload_file(request):
                 file = request.FILES['file']
                 file_extension = file.name.split('.')[-1]
 
+                electrolyzer_type = form.cleaned_data['electrolyzer_type']
+                building = form.cleaned_data['building']
+
                 if file_extension == 'csv':
                     data = pd.read_csv(file)
                 elif file_extension in ['xls', 'xlsx']:
                     data = pd.read_excel(file)
                 else:
-                    message = f"Недоступимый формат файла"
+                    message = "Недоступимый формат файла"
 
                 # Extract data and save Electrolyzer instances
                 for index, row in data.iterrows():
                     electrolyzer = Electrolyzer(
-                        electrolyzer_number=row['№ electrolyzer'],
-                        release_date=row['Release date'],
-                        shutdown_date=row['Shutdown date'],
-                        shutdown_life=row['Shutdown life'],
-                        average_lifetime=row['Average lifetime']
+                        number=row['№ эл-ра'],
+                        launch_date=row['Дата пуска'],
+                        failure_date=row['Дата откл.'],
+                        days_up=(row['Дата откл.'] - row['Дата пуска']).days,
+                        electrolyzer_type=electrolyzer_type,
+                        building=building
                     )
                     electrolyzer.save()
 
@@ -44,6 +48,7 @@ def upload_file(request):
         form = UploadFileForm()
 
     return render(request, 'upload_file.html', {'form': form, 'message': message})
+
 
 
 def index(request):
@@ -58,17 +63,30 @@ def get_electrolyzer_data(request):
     electrolyzers = Electrolyzer.objects.all()
     data = serializers.serialize('json', electrolyzers)
 
-    # Extract average_lifetime values
-    lifetimes = [e.average_lifetime for e in electrolyzers]
+    # Extract days_up values
+    days_up_values = [e.days_up for e in electrolyzers]
 
     # Fit the Weibull distribution parameters
-    def weibull_cdf(x, shape, scale):
-        return 1 - np.exp(-(x / scale) ** shape)
+    shape, loc, scale = weibull_min.fit(days_up_values, floc=0)
 
-    shape, scale = curve_fit(weibull_cdf, max(lifetimes), np.linspace(0, 1, len(lifetimes)), p0=[1, 50])[0]
+    # Compute the Weibull CDF array
+    x_weibull = np.linspace(min(days_up_values), max(days_up_values), 100)
+    y_weibull = weibull_min.cdf(x_weibull, shape, loc, scale)
+
+    # Compute the empirical CDF array
+    x_empirical = np.sort(days_up_values)
+    y_empirical = np.arange(1, len(x_empirical) + 1) / len(x_empirical)
+
     response = {
         'electrolyzers': data,
-        'weibull_params': {'shape': shape, 'scale': scale}
+        'weibull_cdf': {
+            'x': x_weibull.tolist(),
+            'y': y_weibull.tolist(),
+        },
+        'empirical_cdf': {
+            'x': x_empirical.tolist(),
+            'y': y_empirical.tolist(),
+        },
     }
 
     return JsonResponse(response, safe=False)

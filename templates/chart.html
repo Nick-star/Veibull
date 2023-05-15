@@ -5,26 +5,22 @@
     <h1 class="mt-4 mb-4">Диаграмма срока службы электролизера</h1>
     <label for="electrolyzer-select">Выберите электролизёр:</label>
     <select id="electrolyzer-select" multiple>
-      <!-- The electrolyzer options will be populated via JavaScript -->
     </select>
     <div id="chart"></div>
   </div>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-  <script>
+ <script>
   let electrolyzers;
-  let weibull_cdf;
-  let empirical_cdf;
+  let electrolyzerTypes;
 
-  // Fetch data from the server
   $.getJSON("{% url 'get_electrolyzer_data' %}", function(response) {
-      console.log(response)
     electrolyzers = JSON.parse(response.electrolyzers);
-    weibull_cdf = response.weibull_cdf;
-    empirical_cdf = response.empirical_cdf;
+    electrolyzerTypes = response.electrolyzer_types;
+    console.log(electrolyzerTypes)
 
-    for (let i = 0; i < electrolyzers.length; i++) {
-      let opt = $('<option></option>').attr('value', electrolyzers[i].fields.electrolyzer_number).text(electrolyzers[i].fields.electrolyzer_number);
+    for (let i = 0; i < electrolyzerTypes.length; i++) {
+      let opt = $('<option></option>').attr('value', electrolyzerTypes[i].id).text(electrolyzerTypes[i].name);
       $('#electrolyzer-select').append(opt);
     }
     updateChart();
@@ -35,12 +31,15 @@
     let selected = $('#electrolyzer-select').val();
     let x = [];
     let y = [];
+    console.log(x,y)
 
     for (let i = 0; i < electrolyzers.length; i++) {
-      if (selected.includes(electrolyzers[i].fields.electrolyzer_number.toString())) {
-        x.push(electrolyzers[i].fields.electrolyzer_number);
-        y.push(electrolyzers[i].fields.shutdown_life);
-      }
+        if (electrolyzers[i].fields.electrolyzer_type_id) {
+            if (selected.includes(electrolyzers[i].fields.electrolyzer_type_id.toString())) {
+                x.push(electrolyzers[i].fields.number);
+                y.push(electrolyzers[i].fields.days_up);
+            }
+        }
     }
 
     let trace1 = {
@@ -52,28 +51,12 @@
       marker: { size: 12 }
     };
 
-    let trace2 = {
-      x: weibull_cdf.x,
-      y: weibull_cdf.y,
-      mode: 'lines',
-      name: 'Weibull Distribution',
-      line: { color: 'red', width: 2 }
-    };
-
-    let trace3 = {
-      x: empirical_cdf.x,
-      y: empirical_cdf.y,
-      mode: 'lines',
-      name: 'Empirical CDF',
-      line: { color: 'blue', width: 2 }
-    };
-
-    let data = [trace1, trace2, trace3];
+    let data = [trace1];
 
     let layout = {
       title: 'Electrolyzer Lifetime',
-      xaxis: { title: 'Days' },
-      yaxis: { title: 'CDF' }
+      xaxis: { title: 'Дни' },
+      yaxis: { title: 'Days Up' }
     };
 
     Plotly.newPlot('chart', data, layout);
@@ -82,4 +65,6 @@
   // Update chart when the selection changes
   $('#electrolyzer-select').on('change', updateChart);
 </script>
+
+
 {% endblock %}

@@ -61,32 +61,16 @@ def chart(request):
 
 def get_electrolyzer_data(request):
     electrolyzers = Electrolyzer.objects.all()
-    data = serializers.serialize('json', electrolyzers)
+    electrolyzer_types = ElectrolyzerType.objects.all()
 
-    # Extract days_up values
-    days_up_values = [e.days_up for e in electrolyzers]
-
-    # Fit the Weibull distribution parameters
-    shape, loc, scale = weibull_min.fit(days_up_values, floc=0)
-
-    # Compute the Weibull CDF array
-    x_weibull = np.linspace(min(days_up_values), max(days_up_values), 100)
-    y_weibull = weibull_min.cdf(x_weibull, shape, loc, scale)
-
-    # Compute the empirical CDF array
-    x_empirical = np.sort(days_up_values)
-    y_empirical = np.arange(1, len(x_empirical) + 1) / len(x_empirical)
+    electrolyzers_data = serializers.serialize('json', electrolyzers)
+    electrolyzer_types_data = [{'id': et.id, 'name': et.name} for et in electrolyzer_types]
 
     response = {
-        'electrolyzers': data,
-        'weibull_cdf': {
-            'x': x_weibull.tolist(),
-            'y': y_weibull.tolist(),
-        },
-        'empirical_cdf': {
-            'x': x_empirical.tolist(),
-            'y': y_empirical.tolist(),
-        },
+        'electrolyzers': electrolyzers_data,
+        'electrolyzer_types': electrolyzer_types_data,
     }
 
     return JsonResponse(response, safe=False)
+
+

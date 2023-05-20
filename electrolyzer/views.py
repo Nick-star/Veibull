@@ -72,12 +72,21 @@ def chart(request):
     return render(request, 'chart.html')
 
 
+def get_electrolyzer_types(request):
+    electrolyzer_types = ElectrolyzerType.objects.all()
+    data = [{'id': et.id, 'name': et.name} for et in electrolyzer_types]
+    return JsonResponse(data, safe=False)
+
+
 def get_electrolyzer_data(request):
     # electrolyzers = Electrolyzer.objects.all()
     # electrolyzer_types = ElectrolyzerType.objects.all()
     start_search_date = request.GET.get('start_date')
     end_search_date = request.GET.get('end_date')
     censor_date = request.GET.get('forecast_date')
+    electrolyzer_type_id = request.GET.get('electrolyzer_type')
+
+    electrolyzer_type = ElectrolyzerType.objects.get(id=electrolyzer_type_id)
 
     obeme = ElectrolyzerType.objects.first()
     date__range = [start_search_date, end_search_date]

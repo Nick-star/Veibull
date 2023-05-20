@@ -3,121 +3,145 @@
 {% block content %}
     <div class="container">
         <h1 class="mt-4 mb-4">Диаграмма срока службы электролизера</h1>
-        <label for="electrolyzer-select">Выберите электролизёр:</label>
-        <select id="electrolyzer-select" multiple>
-        </select>
+        <div class="col-md-3">
+            <div class="form-group">
+                <label for="electrolyzer-type">Выберите тип электролизера:</label>
+                <select id="electrolyzer-type" class="form-control">
+                </select>
+            </div>
+        </div>
+
         <div class="container mt-4">
-    <div class="row">
-        <div class="col-md-3">
-            <div class="form-group">
-                <label for="start-date">Дата начала:</label>
-                <input type="date" id="start-date" class="form-control" value="2010-01-01">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="start-date">Дата начала:</label>
+                        <input type="date" id="start-date" class="form-control" value="2010-01-01">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="end-date">Дата конца:</label>
+                        <input type="date" id="end-date" class="form-control">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="forecast-date">Дата прогноза:</label>
+                        <input type="date" id="forecast-date" class="form-control">
+                    </div>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button id="update-chart" class="btn btn-primary w-20">Обновить</button>
+                </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="form-group">
-                <label for="end-date">Дата конца:</label>
-                <input type="date" id="end-date" class="form-control">
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="form-group">
-                <label for="forecast-date">Дата прогноза:</label>
-                <input type="date" id="forecast-date" class="form-control">
-            </div>
-        </div>
-        <div class="col-md-3 d-flex align-items-end">
-            <button id="update-chart" class="btn btn-primary w-20">Обновить</button>
-        </div>
-    </div>
-</div>
 
 
         <div id="chart"></div>
     </div>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <script>
-        {#let electrolyzers;#}
-        {#let electrolyzerTypes;#}
-        {##}
-        function dateToString(date) {
-            let month = '' + (date.getMonth() + 1),
-                day = '' + date.getDate(),
-                year = date.getFullYear();
+   <script>
+    function dateToString(date) {
+        let month = '' + (date.getMonth() + 1),
+            day = '' + date.getDate(),
+            year = date.getFullYear();
 
-            if (month.length < 2)
-                month = '0' + month;
-            if (day.length < 2)
-                day = '0' + day;
+        if (month.length < 2)
+            month = '0' + month;
+        if (day.length < 2)
+            day = '0' + day;
 
-            return [year, month, day].join('-');
-        }
+        return [year, month, day].join('-');
+    }
 
-        // Get today's date and the date one year from today
-        let today = new Date();
-        let nextYear = new Date();
-        nextYear.setFullYear(today.getFullYear() + 1);
+    // Get today's date and the date one year from today
+    let today = new Date();
+    let nextYear = new Date();
+    nextYear.setFullYear(today.getFullYear() + 1);
 
-        // Set default end and forecast dates
-        $('#end-date').val(dateToString(today));
-        $('#forecast-date').val(dateToString(nextYear));
+    // Set default end and forecast dates
+    $('#end-date').val(dateToString(today));
+    $('#forecast-date').val(dateToString(nextYear));
 
-        $('#update-chart').click(function() {
-            let startDate = $('#start-date').val();
-            let endDate = $('#end-date').val();
-            let forecastDate = $('#forecast-date').val();
-
-            if (new Date(endDate) <= new Date(startDate) || new Date(forecastDate) <= new Date(endDate)) {
-                alert('Неверные даты. Убедитесь, что Дата окончания > Дата начала и Дата прогноза > Дата окончания.');
-                return;
-            }
-
-            // Use these dates to update the chart
-            $.getJSON("{% url 'get_electrolyzer_data' %}", {start_date: startDate, end_date: endDate, forecast_date: forecastDate}, function (response) {
-                var weibullX = response.weibull.x;
-                var weibullY = response.weibull.y;
-                var empiricalX = response.empirical.x;
-                var empiricalY = response.empirical.y;
-
-                var trace1 = {
-                    x: weibullX,
-                    y: weibullY,
-                    mode: 'lines',
-                    name: 'Weibull',
-                    line: {
-                        shape: 'spline'
-                    }
-                };
-
-                var trace2 = {
-                    x: empiricalX,
-                    y: empiricalY,
-                    mode: 'lines',
-                    name: 'Empirical',
-                    line: {
-                        shape: 'spline'
-                    }
-                };
-
-                var data = [trace1, trace2];
-
-                let layout = {
-                    title: 'CDF',
-                    xaxis: {title: 'Дни'},
-                    yaxis: {title: '%'}
-                };
-
-                Plotly.newPlot('chart', data, layout);
-            })
-            .fail(function(jqXHR, textStatus, errorThrown) {
-                // Display error message when AJAX call fails
-                alert("Нет данных в выбранном диапазоне дат. Пожалуйста, выберите другой диапазон.");
-            });
+    // Populate electrolyzer_type dropdown
+    $.getJSON("{% url 'get_electrolyzer_types' %}", function(response) {
+        let electrolyzerTypeSelect = $('#electrolyzer-type');
+        response.forEach(function(electrolyzerType) {
+            let option = $('<option>');
+            option.val(electrolyzerType.id);
+            option.text(electrolyzerType.name);
+            electrolyzerTypeSelect.append(option);
         });
 
-        // Update chart when the selection changes
-        {#$('#electrolyzer-select').on('change', updateChart);#}
-        $('#update-chart').click();
-    </script>
+        // Set the default electrolyzer type to 1
+        electrolyzerTypeSelect.val('1');
+
+        // Initial chart update after the electrolyzer type has been set
+        updateChart();
+    });
+
+    function updateChart() {
+        let startDate = $('#start-date').val();
+        let endDate = $('#end-date').val();
+        let forecastDate = $('#forecast-date').val();
+        let electrolyzerType = $('#electrolyzer-type').val();
+
+        if (new Date(endDate) <= new Date(startDate) || new Date(forecastDate) <= new Date(endDate)) {
+            alert('Неверные даты. Убедитесь, что Дата окончания > Дата начала и Дата прогноза > Дата окончания.');
+            return;
+        }
+
+        // Use these dates to update the chart
+        $.getJSON("{% url 'get_electrolyzer_data' %}", {
+            start_date: startDate,
+            end_date: endDate,
+            forecast_date: forecastDate,
+            electrolyzer_type: electrolyzerType
+        }, function (response) {
+            var weibullX = response.weibull.x;
+            var weibullY = response.weibull.y;
+            var empiricalX = response.empirical.x;
+            var empiricalY = response.empirical.y;
+
+            var trace1 = {
+                x: weibullX,
+                y: weibullY,
+                mode: 'lines',
+                name: 'Weibull',
+                line: {
+                    shape: 'spline'
+                }
+            };
+
+            var trace2 = {
+                x: empiricalX,
+                y: empiricalY,
+                mode: 'lines',
+                name: 'Empirical',
+                line: {
+                    shape: 'spline'
+                }
+            };
+
+            var data = [trace1, trace2];
+
+            let layout = {
+                title: 'CDF',
+                xaxis: {title: 'Дни'},
+                yaxis: {title: '%'}
+            };
+
+            Plotly.newPlot('chart', data, layout);
+        })
+        .fail(function(jqXHR, textStatus, errorThrown) {
+            // Display error message when AJAX call fails
+            alert("Нет данных в выбранном диапазоне дат. Пожалуйста, выберите другой диапазон.");
+        });
+    }
+
+    // Event handler for update button
+    $('#update-chart').click(updateChart);
+</script>
 {% endblock %}

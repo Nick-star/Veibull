@@ -7,14 +7,14 @@ class ElectrolyzerType(models.Model):
     name = models.CharField(max_length=50)
 
     def __str__(self):
-        return f'ElectrolyzerType(name={self.name})'
+        return self.name
 
 
 class Building(models.Model):
     name = models.CharField(max_length=50)
 
     def __str__(self):
-        return f'Building(name={self.name})'
+        return self.name
 
 
 class Electrolyzer(models.Model):

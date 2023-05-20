@@ -1,16 +1,14 @@
 import math
 
-import pandas as pd
 import numpy as np
-from django.shortcuts import render, redirect
+import pandas as pd
 from django.http import JsonResponse
-from .forms import UploadFileForm
+from django.shortcuts import render, redirect
+from reliability.Fitters import Fit_Weibull_2P
+
+from .forms import UploadFileForm, BuildingForm, ElectrolyzerTypeForm
 from .models import Electrolyzer, ElectrolyzerType, Building
 from .utils import censor_dates, optimize_curve, weibull_cdf, cumulative_function_y
-from reliability.Fitters import Fit_Weibull_2P
-from django.core import serializers
-from scipy.optimize import curve_fit
-from scipy.stats import weibull_min
 
 
 def upload_file(request):
@@ -77,6 +75,7 @@ def get_electrolyzer_types(request):
     data = [{'id': et.id, 'name': et.name} for et in electrolyzer_types]
     return JsonResponse(data, safe=False)
 
+
 def get_buildings(request):
     building = Building.objects.all()
     data = [{'id': b.id, 'name': b.name} for b in building]
@@ -139,3 +138,28 @@ def get_electrolyzer_data(request):
     }
 
     return JsonResponse(response, safe=False)
+
+
+def tb_add(request):
+    building_form = BuildingForm()
+    electrolyzer_type_form = ElectrolyzerTypeForm()
+    return render(request, 'tb_add.html',
+                  {'building_form': building_form, 'electrolyzer_type_form': electrolyzer_type_form})
+
+
+def add_building(request):
+    if request.method == 'POST':
+        form = BuildingForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return JsonResponse({'message': 'Здание добавлено'})
+    return JsonResponse({'message': 'Invalid data'}, status=400)
+
+
+def add_electrolyzer_type(request):
+    if request.method == 'POST':
+        form = ElectrolyzerTypeForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return JsonResponse({'message': 'Тип добавлен'})
+    return JsonResponse({'message': 'Invalid data'}, status=400)

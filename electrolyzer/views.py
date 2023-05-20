@@ -75,8 +75,9 @@ def chart(request):
 def get_electrolyzer_data(request):
     # electrolyzers = Electrolyzer.objects.all()
     # electrolyzer_types = ElectrolyzerType.objects.all()
-    start_search_date, end_search_date = '2012-08-20', '2019-10-10'
-    censor_date = '2019-12-10'
+    start_search_date = request.GET.get('start_date')
+    end_search_date = request.GET.get('end_date')
+    censor_date = request.GET.get('forecast_date')
 
     obeme = ElectrolyzerType.objects.first()
     date__range = [start_search_date, end_search_date]
@@ -113,6 +114,11 @@ def get_electrolyzer_data(request):
         'empirical': {
             'x': list(x_2),
             'y': list(y_2)
+        },
+        'dates': {
+            'date_start': start_search_date,
+            'date_end': end_search_date,
+            'censor_date': censor_date
         }
         # 'electrolyzers': electrolyzers_data,
         # 'electrolyzer_types': electrolyzer_types_data,

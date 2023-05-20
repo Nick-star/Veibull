@@ -10,6 +10,13 @@
                 </select>
             </div>
         </div>
+        <div class="col-md-3">
+            <div class="form-group">
+                <label for="building">Выберите здание:</label>
+                <select id="building" class="form-control">
+                </select>
+            </div>
+        </div>
 
         <div class="container mt-4">
             <div class="row">
@@ -42,106 +49,122 @@
     </div>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-   <script>
-    function dateToString(date) {
-        let month = '' + (date.getMonth() + 1),
-            day = '' + date.getDate(),
-            year = date.getFullYear();
+    <script>
+        function dateToString(date) {
+            let month = '' + (date.getMonth() + 1),
+                day = '' + date.getDate(),
+                year = date.getFullYear();
 
-        if (month.length < 2)
-            month = '0' + month;
-        if (day.length < 2)
-            day = '0' + day;
+            if (month.length < 2)
+                month = '0' + month;
+            if (day.length < 2)
+                day = '0' + day;
 
-        return [year, month, day].join('-');
-    }
-
-    // Get today's date and the date one year from today
-    let today = new Date();
-    let nextYear = new Date();
-    nextYear.setFullYear(today.getFullYear() + 1);
-
-    // Set default end and forecast dates
-    $('#end-date').val(dateToString(today));
-    $('#forecast-date').val(dateToString(nextYear));
-
-    // Populate electrolyzer_type dropdown
-    $.getJSON("{% url 'get_electrolyzer_types' %}", function(response) {
-        let electrolyzerTypeSelect = $('#electrolyzer-type');
-        response.forEach(function(electrolyzerType) {
-            let option = $('<option>');
-            option.val(electrolyzerType.id);
-            option.text(electrolyzerType.name);
-            electrolyzerTypeSelect.append(option);
-        });
-
-        // Set the default electrolyzer type to 1
-        electrolyzerTypeSelect.val('1');
-
-        // Initial chart update after the electrolyzer type has been set
-        updateChart();
-    });
-
-    function updateChart() {
-        let startDate = $('#start-date').val();
-        let endDate = $('#end-date').val();
-        let forecastDate = $('#forecast-date').val();
-        let electrolyzerType = $('#electrolyzer-type').val();
-
-        if (new Date(endDate) <= new Date(startDate) || new Date(forecastDate) <= new Date(endDate)) {
-            alert('Неверные даты. Убедитесь, что Дата окончания > Дата начала и Дата прогноза > Дата окончания.');
-            return;
+            return [year, month, day].join('-');
         }
 
-        // Use these dates to update the chart
-        $.getJSON("{% url 'get_electrolyzer_data' %}", {
-            start_date: startDate,
-            end_date: endDate,
-            forecast_date: forecastDate,
-            electrolyzer_type: electrolyzerType
-        }, function (response) {
-            var weibullX = response.weibull.x;
-            var weibullY = response.weibull.y;
-            var empiricalX = response.empirical.x;
-            var empiricalY = response.empirical.y;
+        // Get today's date and the date one year from today
+        let today = new Date();
+        let nextYear = new Date();
+        nextYear.setFullYear(today.getFullYear() + 1);
 
-            var trace1 = {
-                x: weibullX,
-                y: weibullY,
-                mode: 'lines',
-                name: 'Weibull',
-                line: {
-                    shape: 'spline'
-                }
-            };
+        // Set default end and forecast dates
+        $('#end-date').val(dateToString(today));
+        $('#forecast-date').val(dateToString(nextYear));
 
-            var trace2 = {
-                x: empiricalX,
-                y: empiricalY,
-                mode: 'lines',
-                name: 'Empirical',
-                line: {
-                    shape: 'spline'
-                }
-            };
+        // Populate electrolyzer_type dropdown
+        $.getJSON("{% url 'get_electrolyzer_types' %}", function (response) {
+            let electrolyzerTypeSelect = $('#electrolyzer-type');
+            response.forEach(function (electrolyzerType) {
+                let option = $('<option>');
+                option.val(electrolyzerType.id);
+                option.text(electrolyzerType.name);
+                electrolyzerTypeSelect.append(option);
+            });
 
-            var data = [trace1, trace2];
+            // Set the default electrolyzer type to 1
+            electrolyzerTypeSelect.val('1');
 
-            let layout = {
-                title: 'CDF',
-                xaxis: {title: 'Дни'},
-                yaxis: {title: '%'}
-            };
+            // Initial chart update after the electrolyzer type has been set
+            $.getJSON("{% url 'get_buildings' %}", function(response) {
+            let buildingSelect = $('#building');
+            response.forEach(function(building) {
+                let option = $('<option>');
+                option.val(building.id);
+                option.text(building.name);
+                buildingSelect.append(option);
+            });
 
-            Plotly.newPlot('chart', data, layout);
-        })
-        .fail(function(jqXHR, textStatus, errorThrown) {
-            // Display error message when AJAX call fails
-            alert("Нет данных в выбранном диапазоне дат. Пожалуйста, выберите другой диапазон.");
+            // Set the default building to 1
+            buildingSelect.val('1');
+
+            // Initial chart update after the electrolyzer type and building have been set
+            updateChart();
         });
-    }
+        });
 
-    // Event handler for update button
-    $('#update-chart').click(updateChart);
-</script>
+        function updateChart() {
+            let startDate = $('#start-date').val();
+            let endDate = $('#end-date').val();
+            let forecastDate = $('#forecast-date').val();
+            let electrolyzerType = $('#electrolyzer-type').val();
+            let building = $('#building').val();
+
+            if (new Date(endDate) <= new Date(startDate) || new Date(forecastDate) <= new Date(endDate)) {
+                alert('Неверные даты. Убедитесь, что Дата окончания > Дата начала и Дата прогноза > Дата окончания.');
+                return;
+            }
+
+            // Use these dates to update the chart
+            $.getJSON("{% url 'get_electrolyzer_data' %}", {
+                start_date: startDate,
+                end_date: endDate,
+                forecast_date: forecastDate,
+                electrolyzer_type: electrolyzerType,
+                building: building
+            }, function (response) {
+                var weibullX = response.weibull.x;
+                var weibullY = response.weibull.y;
+                var empiricalX = response.empirical.x;
+                var empiricalY = response.empirical.y;
+
+                var trace1 = {
+                    x: weibullX,
+                    y: weibullY,
+                    mode: 'lines',
+                    name: 'Weibull',
+                    line: {
+                        shape: 'spline'
+                    }
+                };
+
+                var trace2 = {
+                    x: empiricalX,
+                    y: empiricalY,
+                    mode: 'lines',
+                    name: 'Empirical',
+                    line: {
+                        shape: 'spline'
+                    }
+                };
+
+                var data = [trace1, trace2];
+
+                let layout = {
+                    title: 'CDF',
+                    xaxis: {title: 'Дни'},
+                    yaxis: {title: '%'}
+                };
+
+                Plotly.newPlot('chart', data, layout);
+            })
+                .fail(function (jqXHR, textStatus, errorThrown) {
+                    // Display error message when AJAX call fails
+                    alert("Нет данных в выбранном диапазоне дат. Пожалуйста, выберите другой диапазон.");
+                });
+        }
+
+        // Event handler for update button
+        $('#update-chart').click(updateChart);
+    </script>
 {% endblock %}

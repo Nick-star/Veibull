@@ -77,6 +77,11 @@ def get_electrolyzer_types(request):
     data = [{'id': et.id, 'name': et.name} for et in electrolyzer_types]
     return JsonResponse(data, safe=False)
 
+def get_buildings(request):
+    building = Building.objects.all()
+    data = [{'id': b.id, 'name': b.name} for b in building]
+    return JsonResponse(data, safe=False)
+
 
 def get_electrolyzer_data(request):
     # electrolyzers = Electrolyzer.objects.all()

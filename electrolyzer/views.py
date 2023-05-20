@@ -63,7 +63,8 @@ def upload_file(request):
 
 
 def index(request):
-    return render(request, 'index.html')
+    electrolyzers = Electrolyzer.objects.select_related('electrolyzer_type', 'building').all()
+    return render(request, 'index.html', {'electrolyzers': electrolyzers})
 
 
 def chart(request):

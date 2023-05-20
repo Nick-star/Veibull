@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-
+{% block title %}График{% endblock %}
 {% block content %}
     <div class="container">
         <h1 class="mt-4 mb-4">Диаграмма срока службы электролизера</h1>
@@ -153,7 +153,8 @@
                 let layout = {
                     title: 'CDF',
                     xaxis: {title: 'Дни'},
-                    yaxis: {title: '%'}
+                    yaxis: {title: '%'},
+                    autosize: true
                 };
 
                 Plotly.newPlot('chart', data, layout);

@@ -1,1 +1,39 @@
 {% extends 'base.html' %}
+{% load static %}
+{% block title %}Главная{% endblock %}
+
+{% block content %}
+    <link rel="stylesheet" href="{% static 'css/index.css' %}">
+    <div class="container">
+        <h1 id="fade-in-text" class="display-1 text-center mb-4">РУСАЛ</h1>
+        <h1 id="electrolyzer-title" class="text-center mb-4">Электролизёры</h1>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Номер</th>
+                    <th scope="col">Дата начала</th>
+                    <th scope="col">Дата ошибки</th>
+                    <th scope="col">Дни</th>
+                    <th scope="col">Тип</th>
+                    <th scope="col">Здание</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for electrolyzer in electrolyzers %}
+                    <tr>
+                        <th scope="row">{{ electrolyzer.id }}</th>
+                        <td>{{ electrolyzer.number }}</td>
+                        <td>{{ electrolyzer.launch_date }}</td>
+                        <td>{{ electrolyzer.failure_date }}</td>
+                        <td>{{ electrolyzer.days_up }}</td>
+                        <td>{{ electrolyzer.electrolyzer_type.name }}</td>
+                        <td>{{ electrolyzer.building.name }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

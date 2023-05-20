@@ -10,7 +10,7 @@ import pandas as pd
 
 def calculate_days(data: pd.DataFrame, start_date, end_date,
                    censor_date=None, launch_column: str = 'launch_date',
-                   failure_column: str = 'failure_date', failed_time_column: str = 'failed_days',
+                   failure_column: str = 'failure_date', failed_time_column: str = 'days_up',
                    running_time_column: str = 'running_days'):
     """
     Возвращает выборку из data, где start_date < data[launch_column] < end_date.
@@ -41,10 +41,21 @@ def calculate_days(data: pd.DataFrame, start_date, end_date,
 
     data = data[(data[launch_column] > start_date) & (data[launch_column] < end_date)].copy()
 
-    failure_column_null = data[failure_column].isnull()
-    data.loc[~failure_column_null, failed_time_column] = (
+    data.loc[~data[failure_column].notnull(), failed_time_column] = (
             data[failure_column] - data[launch_column]).dt.days
-    data.loc[failure_column_null, running_time_column] = (
+    data = censor_dates(data, censor_date, launch_column, running_time_column, failure_column)
+    # data.loc[failure_column_null, running_time_column] = (
+    #         censor_date - pd.to_datetime(data[launch_column])).dt.days
+
+    return data
+
+
+def censor_dates(data: pd.DataFrame, censor_date, launch_column: str = 'launch_date',
+                 running_time_column: str = 'running_days', failure_column: str = 'failure_date'):
+    if not isinstance(censor_date, pd.Timestamp):
+        censor_date = pd.to_datetime(censor_date)
+
+    data.loc[data[failure_column].isnull(), running_time_column] = (
             censor_date - pd.to_datetime(data[launch_column])).dt.days
 
     return data

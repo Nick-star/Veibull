@@ -1,70 +1,57 @@
 {% extends 'base.html' %}
 
 {% block content %}
-  <div class="container">
-    <h1 class="mt-4 mb-4">Диаграмма срока службы электролизера</h1>
-    <label for="electrolyzer-select">Выберите электролизёр:</label>
-    <select id="electrolyzer-select" multiple>
-    </select>
-    <div id="chart"></div>
-  </div>
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
- <script>
-  let electrolyzers;
-  let electrolyzerTypes;
+    <div class="container">
+        <h1 class="mt-4 mb-4">Диаграмма срока службы электролизера</h1>
+        <label for="electrolyzer-select">Выберите электролизёр:</label>
+        <select id="electrolyzer-select" multiple>
+        </select>
+        <div id="chart"></div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script>
+        {#let electrolyzers;#}
+        {#let electrolyzerTypes;#}
+        {##}
+        $.getJSON("{% url 'get_electrolyzer_data' %}", function (response) {
+            var weibullX = response.weibull.x;
+            var weibullY = response.weibull.y;
+            var empiricalX = response.empirical.x;
+            var empiricalY = response.empirical.y;
 
-  $.getJSON("{% url 'get_electrolyzer_data' %}", function(response) {
-    electrolyzers = JSON.parse(response.electrolyzers);
-    electrolyzerTypes = response.electrolyzer_types;
-    console.log(electrolyzerTypes)
+            var trace1 = {
+                x: weibullX,
+                y: weibullY,
+                mode: 'lines',
+                name: 'Weibull',
+                line: {
+                    shape: 'spline'
+                }
+            };
 
-    for (let i = 0; i < electrolyzerTypes.length; i++) {
-      let opt = $('<option></option>').attr('value', electrolyzerTypes[i].id).text(electrolyzerTypes[i].name);
-      $('#electrolyzer-select').append(opt);
-    }
-    updateChart();
-  });
+            var trace2 = {
+                x: empiricalX,
+                y: empiricalY,
+                mode: 'lines',
+                name: 'Empirical',
+                line: {
+                    shape: 'spline'
+                }
+            };
 
-  // Helper function to update the chart
-  function updateChart() {
-    let selected = $('#electrolyzer-select').val();
-    let x = [];
-    let y = [];
-    console.log(x,y)
+            var data = [trace1, trace2];
 
-    for (let i = 0; i < electrolyzers.length; i++) {
-        if (electrolyzers[i].fields.electrolyzer_type_id) {
-            if (selected.includes(electrolyzers[i].fields.electrolyzer_type_id.toString())) {
-                x.push(electrolyzers[i].fields.number);
-                y.push(electrolyzers[i].fields.days_up);
-            }
-        }
-    }
+            let layout = {
+                title: 'CDF',
+                xaxis: {title: 'Дни'},
+                yaxis: {title: '%'}
+            };
 
-    let trace1 = {
-      x: x,
-      y: y,
-      mode: 'markers',
-      type: 'scatter',
-      name: 'Electrolyzer Lifetimes',
-      marker: { size: 12 }
-    };
+            Plotly.newPlot('chart', data, layout);
+        })
 
-    let data = [trace1];
-
-    let layout = {
-      title: 'Electrolyzer Lifetime',
-      xaxis: { title: 'Дни' },
-      yaxis: { title: 'Days Up' }
-    };
-
-    Plotly.newPlot('chart', data, layout);
-  }
-
-  // Update chart when the selection changes
-  $('#electrolyzer-select').on('change', updateChart);
-</script>
-
-
+        // Update chart when the selection changes
+        {#$('#electrolyzer-select').on('change', updateChart);#}
+    </script>
 {% endblock %}

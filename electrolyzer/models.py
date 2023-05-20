@@ -20,8 +20,8 @@ class Building(models.Model):
 class Electrolyzer(models.Model):
     number = models.IntegerField()
     launch_date = models.DateField()
-    failure_date = models.DateField(blank=True)
-    days_up = models.IntegerField(blank=True)
+    failure_date = models.DateField(blank=True, null=True)
+    days_up = models.IntegerField(blank=True, null=True)
     electrolyzer_type = models.ForeignKey(ElectrolyzerType, on_delete=models.CASCADE)
     building = models.ForeignKey(Building, on_delete=models.CASCADE)
 

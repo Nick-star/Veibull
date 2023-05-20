@@ -6,18 +6,32 @@
         <label for="electrolyzer-select">Выберите электролизёр:</label>
         <select id="electrolyzer-select" multiple>
         </select>
-        <div class="date-selection">
-            <label for="start-date">Дата начала:</label>
-            <input type="date" id="start-date" value="2010-01-01">
-
-            <label for="end-date">Дата конца:</label>
-            <input type="date" id="end-date">
-
-            <label for="forecast-date">Дата прогноза:</label>
-            <input type="date" id="forecast-date">
-
-            <button id="update-chart">Обновить</button>
+        <div class="container mt-4">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="form-group">
+                <label for="start-date">Дата начала:</label>
+                <input type="date" id="start-date" class="form-control" value="2010-01-01">
+            </div>
         </div>
+        <div class="col-md-3">
+            <div class="form-group">
+                <label for="end-date">Дата конца:</label>
+                <input type="date" id="end-date" class="form-control">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="form-group">
+                <label for="forecast-date">Дата прогноза:</label>
+                <input type="date" id="forecast-date" class="form-control">
+            </div>
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+            <button id="update-chart" class="btn btn-primary w-20">Обновить</button>
+        </div>
+    </div>
+</div>
+
 
         <div id="chart"></div>
     </div>

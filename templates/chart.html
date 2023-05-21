@@ -86,21 +86,21 @@
             electrolyzerTypeSelect.val('1');
 
             // Initial chart update after the electrolyzer type has been set
-            $.getJSON("{% url 'get_buildings' %}", function(response) {
-            let buildingSelect = $('#building');
-            response.forEach(function(building) {
-                let option = $('<option>');
-                option.val(building.id);
-                option.text(building.name);
-                buildingSelect.append(option);
+            $.getJSON("{% url 'get_buildings' %}", function (response) {
+                let buildingSelect = $('#building');
+                response.forEach(function (building) {
+                    let option = $('<option>');
+                    option.val(building.id);
+                    option.text(building.name);
+                    buildingSelect.append(option);
+                });
+
+                // Set the default building to 1
+                buildingSelect.val('1');
+
+                // Initial chart update after the electrolyzer type and building have been set
+                updateChart();
             });
-
-            // Set the default building to 1
-            buildingSelect.val('1');
-
-            // Initial chart update after the electrolyzer type and building have been set
-            updateChart();
-        });
         });
 
         function updateChart() {
@@ -164,6 +164,13 @@
                     alert("Нет данных в выбранном диапазоне дат. Пожалуйста, выберите другой диапазон.");
                 });
         }
+
+        $(window).resize(function () {
+            Plotly.relayout('chart', {
+                'xaxis.autorange': true,
+                'yaxis.autorange': true
+            });
+        });
 
         // Event handler for update button
         $('#update-chart').click(updateChart);

@@ -8,6 +8,7 @@
     <!-- Add any additional stylesheets or scripts here -->
      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
    <link rel="icon" href="{% static 'svg/icon.svg' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
@@ -24,16 +25,17 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav">
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'index' %}">Главная</a>
+                    <a class="nav-link" href="{% url 'index' %}"><i class="fas fa-table"></i></a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'upload_file' %}">Загрузка</a>
+                    <a class="nav-link" href="{% url 'upload_file' %}"><i class="fas fa-upload"></i></a>
+</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'chart' %}">График</a>
+                    <a class="nav-link" href="{% url 'chart' %}"><i class="fas fa-chart-line"></i></a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'tb_add' %}">Добавление</a>
+                    <a class="nav-link" href="{% url 'tb_add' %}"><i class="fas fa-plus"></i></a>
                 </li>
 {#                <li class="nav-item">#}
 {#                    <a class="nav-link" href="{% url 'results' %}">Results</a>#}
@@ -56,7 +58,7 @@
     <!-- Add your footer here -->
     <footer class="bg-dark text-white py-4 mt-auto">
         <div class="container">
-            <p class="mb-0">&copy; 2023 Electrolyzer Overhaul Forecasting</p>
+            <p class="mb-0">&copy; 2023 Электролизёры РУСАЛ</p>
         </div>
     </footer>
 

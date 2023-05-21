@@ -4,14 +4,16 @@
 
 {% block content %}
     <link rel="stylesheet" href="{% static 'css/index.css' %}">
+    <link rel="stylesheet" href="{% static 'css/mdb.min.css' %}">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.23/css/jquery.dataTables.min.css"/>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.dataTables.min.css"/>
     <div class="container">
         <h1 id="fade-in-text" class="display-1 text-center mb-4">РУСАЛ</h1>
         <h1 id="electrolyzer-title" class="text-center mb-4">Электролизёры</h1>
         <div class="table-responsive">
-            <table class="table table-striped">
+            <table id="datatable" class="datatable table table-striped">
                 <thead>
                 <tr>
-                    <th scope="col">#</th>
                     <th scope="col">Номер</th>
                     <th scope="col">Дата начала</th>
                     <th scope="col">Дата ошибки</th>
@@ -23,7 +25,6 @@
                 <tbody>
                 {% for electrolyzer in electrolyzers %}
                     <tr>
-                        <th scope="row">{{ electrolyzer.id }}</th>
                         <td>{{ electrolyzer.number }}</td>
                         <td>{{ electrolyzer.launch_date }}</td>
                         <td>{{ electrolyzer.failure_date }}</td>
@@ -36,4 +37,21 @@
             </table>
         </div>
     </div>
+    <script type="text/javascript" src="{% static 'js/mdb.min.js' %}"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.10.23/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
+    <script type="text/javascript">
+    $(document).ready(function () {
+    $('#datatable').DataTable({
+        "pagingType": "simple_numbers",
+        "searching": true,
+        "info": true,
+        "lengthChange": true,
+        "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+        "responsive": true  // make the datatable responsive
+    });
+    $('.dataTables_length').addClass('bs-select');
+});
+</script>
 {% endblock %}

@@ -5,7 +5,7 @@ import pandas as pd
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from reliability.Fitters import Fit_Weibull_2P
-
+from django.db.models import Q
 from .forms import UploadFileForm, BuildingForm, ElectrolyzerTypeForm
 from .models import Electrolyzer, ElectrolyzerType, Building
 from .utils import censor_dates, optimize_curve, weibull_cdf, cumulative_function_y
@@ -84,22 +84,20 @@ def get_buildings(request):
 
 
 def get_electrolyzer_data(request):
-    # electrolyzers = Electrolyzer.objects.all()
-    # electrolyzer_types = ElectrolyzerType.objects.all()
     start_search_date = request.GET.get('start_date')
     end_search_date = request.GET.get('end_date')
     censor_date = request.GET.get('forecast_date')
     electrolyzer_type_id = request.GET.get('electrolyzer_type')
+    building = request.GET.get('building')
 
-    electrolyzer_type = ElectrolyzerType.objects.get(id=electrolyzer_type_id)
-
-    obeme = ElectrolyzerType.objects.first()
-    date__range = [start_search_date, end_search_date]
     value_list = ["launch_date", "failure_date", "days_up"]
-    values = obeme.electrolyzer_set.filter(launch_date__range=date__range).values(*value_list)
+    values = Electrolyzer.objects.filter(
+        Q(electrolyzer_type=electrolyzer_type_id) & Q(building=building) & Q(
+            launch_date__range=[start_search_date, end_search_date])
+    ).values(*value_list)
+
     df = pd.DataFrame.from_records(values)
     df = censor_dates(df, censor_date)
-    print(df)
 
     fit = Fit_Weibull_2P(failures=np.array(df[df['days_up'].notnull()]['days_up']),
                          right_censored=np.array(df[df['running_days'].notnull()]['running_days']), print_results=False,
@@ -113,20 +111,13 @@ def get_electrolyzer_data(request):
     y_2 = cumulative_function_y(x_2) * 100
     x_2, y_2 = optimize_curve(x_2, y_2, 0.01)
 
-    # ax = plt.gca()
-    # plt.plot(x, y * 100)
-    # plt.plot(x_2, y_2)
-
-    # electrolyzers_data = serializers.serialize('json', electrolyzers)
-    # electrolyzer_types_data = [{'id': et.id, 'name': et.name} for et in electrolyzer_types]
-
     response = {
         'weibull': {
-            'x': list(x),
+            'x': list(x / 30),
             'y': list(y)
         },
         'empirical': {
-            'x': list(x_2),
+            'x': list(x_2 / 30),
             'y': list(y_2)
         },
         'dates': {
@@ -134,8 +125,6 @@ def get_electrolyzer_data(request):
             'date_end': end_search_date,
             'censor_date': censor_date
         }
-        # 'electrolyzers': electrolyzers_data,
-        # 'electrolyzer_types': electrolyzer_types_data,
     }
 
     return JsonResponse(response, safe=False)

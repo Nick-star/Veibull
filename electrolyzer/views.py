@@ -124,26 +124,38 @@ def get_electrolyzer_data(request):
     df = censor_dates(df, censor_date)
 
     fit = Fit_Weibull_2P(failures=np.array(df[df['days_up'].notnull()]['days_up']),
-                         right_censored=np.array(df[df['running_days'].notnull()]['running_days']), print_results=False,
+                         print_results=False,
                          show_probability_plot=False)
 
+    days = (pd.to_datetime(censor_date) - pd.to_datetime(end_search_date)).days * 1.5
     x, y = weibull_cdf(fit.beta, fit.alpha)
     x, y = optimize_curve(x, y, 0.01)
     y *= 100
 
     x_2 = np.array(df['days_up'].dropna())
-    y_2 = cumulative_function_y(x_2) * 100
+
+    # x_2_cut = x_2[x_2 <= ]
+    y_2 = cumulative_function_y(x_2, len(x_2)) * 100
     x_2, y_2 = optimize_curve(x_2, y_2, 0.01)
 
+    name = ElectrolyzerType.objects.get(pk=electrolyzer_type_id).name
+    count = len(df[df['days_up'].isnull()])
+    failed_percent = 1 - np.exp(-np.power(days / fit.alpha, fit.beta))
     response = {
         'weibull': {
-            'x': list(x / 30),
+            'name': name + ' рассчитанный',
+            'x': list(x / 30.4167),
             'y': list(y)
         },
         'empirical': {
-            'x': list(x_2 / 30),
+            'name': name,
+            'x': list(x_2 / 30.4167),
             'y': list(y_2)
         },
+        'building': Building.objects.get(pk=building).name,
+        'type': name,
+        'working_count': count,
+        'failed_count': f'{count * float(failed_percent):.2f}',
         'dates': {
             'date_start': start_search_date,
             'date_end': end_search_date,

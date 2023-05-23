@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="container d-flex align-items-center justify-content-center vh-100">
+        <form id="edit-form" class="text-center" method="post">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="number">Номер:</label>
+                <input type="number" id="number" class="form-control" name="number" value="{{ electrolyzer.number }}">
+            </div>
+            <div class="form-group">
+                <label for="launch-date">Дата начала (требует заполнения):</label>
+                <input type="date" id="launch-date" class="form-control" name="launch_date"
+                       value="{{ electrolyzer.launch_date }}">
+            </div>
+            <div class="form-group">
+                <label for="failure-date">Дата ошибки (требует заполнения):</label>
+                <input type="date" id="failure-date" class="form-control" name="failure_date"
+                       value="{{ electrolyzer.failure_date }}">
+            </div>
+            <div class="form-group">
+                <label for="days-up">Дни:</label>
+                <input type="number" id="days-up" class="form-control" name="days_up"
+                       value="{{ electrolyzer.days_up }}">
+            </div>
+            <div class="form-group">
+                <label for="electrolyzer-type">Тип электролизёра:</label>
+                <select id="electrolyzer-type" class="form-control" name="electrolyzer_type">
+                    {% for electrolyzer_type in electrolyzer_types %}
+                        <option value="{{ electrolyzer_type.id }}"
+                                {% if electrolyzer.electrolyzer_type.id == electrolyzer_type.id %}selected{% endif %}>{{ electrolyzer_type.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="building">Строение:</label>
+                <select id="building" class="form-control" name="building">
+                    {% for building in buildings %}
+                        <option value="{{ building.id }}"
+                                {% if electrolyzer.building.id == building.id %}selected{% endif %}>{{ building.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Обновить</button>
+        </form>
+    </div>
+{% endblock %}

@@ -2,13 +2,37 @@ import math
 
 import numpy as np
 import pandas as pd
-from django.http import JsonResponse
-from django.shortcuts import render, redirect
-from reliability.Fitters import Fit_Weibull_2P
 from django.db.models import Q
-from .forms import UploadFileForm, BuildingForm, ElectrolyzerTypeForm
+from django.http import JsonResponse
+from django.shortcuts import render, redirect, get_object_or_404
+from reliability.Fitters import Fit_Weibull_2P
+
+from .forms import UploadFileForm, BuildingForm, ElectrolyzerTypeForm, ElectrolyzerForm
 from .models import Electrolyzer, ElectrolyzerType, Building
 from .utils import censor_dates, optimize_curve, weibull_cdf, cumulative_function_y
+
+
+def edit_electrolyzer(request, electrolyzer_id):
+    electrolyzer = get_object_or_404(Electrolyzer, id=electrolyzer_id)
+
+    if request.method == 'POST':
+        form = ElectrolyzerForm(request.POST, instance=electrolyzer)
+        if form.is_valid():
+            form.save()
+            return redirect('index')
+    else:
+        form = ElectrolyzerForm(instance=electrolyzer)
+
+    electrolyzer_types = ElectrolyzerType.objects.all()
+    buildings = Building.objects.all()
+
+    context = {
+        'form': form,
+        'electrolyzer': electrolyzer,
+        'buildings': buildings,
+        'electrolyzer_types': electrolyzer_types,
+    }
+    return render(request, 'edit_electrolyzer.html', context)
 
 
 def upload_file(request):

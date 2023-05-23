@@ -20,6 +20,7 @@
                     <th scope="col">Дни</th>
                     <th scope="col">Тип</th>
                     <th scope="col">Здание</th>
+                    <th scope="col">Действия</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -31,6 +32,11 @@
                         <td>{{ electrolyzer.days_up }}</td>
                         <td>{{ electrolyzer.electrolyzer_type.name }}</td>
                         <td>{{ electrolyzer.building.name }}</td>
+                    <td>
+                        <a href="{% url 'edit_electrolyzer' electrolyzer.id %}">
+                            Изменить
+                        </a>
+                    </td>
                     </tr>
                 {% endfor %}
                 </tbody>
@@ -49,7 +55,7 @@
         "info": true,
         "lengthChange": true,
         "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
-        "responsive": true  // make the datatable responsive
+        "responsive": true
     });
     $('.dataTables_length').addClass('bs-select');
 });

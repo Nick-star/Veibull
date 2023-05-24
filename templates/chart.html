@@ -51,8 +51,8 @@
         </div>
         <div class="row">
             <div class="col">
-                <div class="container">
-                    <table class="table table-striped table-bordered">
+                <div class="table-responsive">
+                    <table id="tableforecast" class="table table-striped table-bordered">
                         <thead>
                         <tr>
                             <th scope="col">Корпус</th>
@@ -77,6 +77,11 @@
             </div>
         </div>
     </div>
+    <script>
+        $(document).ready(function () {
+            $('#tableforecast').DataTable();
+        });
+    </script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script>

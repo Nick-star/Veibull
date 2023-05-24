@@ -6,7 +6,8 @@
     <link rel="stylesheet" href="{% static 'css/index.css' %}">
     <link rel="stylesheet" href="{% static 'css/mdb.min.css' %}">
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.23/css/jquery.dataTables.min.css"/>
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.dataTables.min.css"/>
+    <link rel="stylesheet" type="text/css"
+          href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.dataTables.min.css"/>
     <div class="container">
         <h1 id="fade-in-text" class="display-1 text-center mb-4">РУСАЛ</h1>
         <h1 id="electrolyzer-title" class="text-center mb-4">Электролизёры</h1>
@@ -32,11 +33,14 @@
                         <td>{{ electrolyzer.days_up }}</td>
                         <td>{{ electrolyzer.electrolyzer_type.name }}</td>
                         <td>{{ electrolyzer.building.name }}</td>
-                    <td>
-                        <a href="{% url 'edit_electrolyzer' electrolyzer.id %}">
-                            Изменить
-                        </a>
-                    </td>
+                        <td>
+                            <a href="{% url 'edit_electrolyzer' electrolyzer.id %}">
+                                <button type="button" class="btn btn-outline-dark btn-sm"
+                                        data-mdb-ripple-color="dark">
+                                    Изменить
+                                </button>
+                            </a>
+                        </td>
                     </tr>
                 {% endfor %}
                 </tbody>
@@ -46,18 +50,19 @@
     <script type="text/javascript" src="{% static 'js/mdb.min.js' %}"></script>
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script type="text/javascript" src="https://cdn.datatables.net/1.10.23/js/jquery.dataTables.min.js"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
+    <script type="text/javascript"
+            src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
     <script type="text/javascript">
-    $(document).ready(function () {
-    $('#datatable').DataTable({
-        "pagingType": "simple_numbers",
-        "searching": true,
-        "info": true,
-        "lengthChange": true,
-        "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
-        "responsive": true
-    });
-    $('.dataTables_length').addClass('bs-select');
-});
-</script>
+        $(document).ready(function () {
+            $('#datatable').DataTable({
+                "pagingType": "simple_numbers",
+                "searching": true,
+                "info": true,
+                "lengthChange": true,
+                "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+                "responsive": true
+            });
+            $('.dataTables_length').addClass('bs-select');
+        });
+    </script>
 {% endblock %}

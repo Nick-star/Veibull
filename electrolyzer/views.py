@@ -154,8 +154,10 @@ def get_electrolyzer_data(request):
         },
         'building': Building.objects.get(pk=building).name,
         'type': name,
+        'date_range': f'{start_search_date} {end_search_date}',
         'working_count': count,
         'failed_count': f'{count * float(failed_percent):.2f}',
+        'censor': censor_date,
         'dates': {
             'date_start': start_search_date,
             'date_end': end_search_date,

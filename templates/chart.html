@@ -58,9 +58,9 @@
                             <th scope="col">Корпус</th>
                             <th scope="col">Тип</th>
                             <th scope="col">Даты</th>
-                            <th scope="col">Всего действующих, шт</th>
+                            <th scope="col">Действующих, шт</th>
                             <th scope="col">Дата прогноза</th>
-                            <th scope="col">Прогноз отключений, шт</th>
+                            <th scope="col">Отключений, шт</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -196,6 +196,8 @@
                 document.getElementById("type").innerText = response.type;
                 document.getElementById("working-count").innerText = response.working_count;
                 document.getElementById("failed-count").innerText = response.failed_count;
+                document.getElementById("dates-range").innerText = response.date_range;
+                document.getElementById("est-date").innerText = response.censor;
                 Plotly.newPlot('chart', data, layout);
             })
                 .fail(function (jqXHR, textStatus, errorThrown) {

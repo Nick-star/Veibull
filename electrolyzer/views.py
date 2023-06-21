@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from django.db.models import Q
 from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from reliability.Fitters import Fit_Weibull_2P
 
@@ -12,6 +13,7 @@ from .models import Electrolyzer, ElectrolyzerType, Building
 from .utils import censor_dates, optimize_curve, weibull_cdf, cumulative_function_y
 
 
+@login_required
 def edit_electrolyzer(request, electrolyzer_id):
     electrolyzer = get_object_or_404(Electrolyzer, id=electrolyzer_id)
 
@@ -34,7 +36,7 @@ def edit_electrolyzer(request, electrolyzer_id):
     }
     return render(request, 'edit_electrolyzer.html', context)
 
-
+@login_required
 def upload_file(request):
     message = None
     if request.method == 'POST':
@@ -168,6 +170,7 @@ def get_electrolyzer_data(request):
     return JsonResponse(response, safe=False)
 
 
+@login_required
 def tb_add(request):
     building_form = BuildingForm()
     electrolyzer_type_form = ElectrolyzerTypeForm()

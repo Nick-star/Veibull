@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+{% load static %}
+{% block title %}Добавление пользователя{% endblock %}
+{% block content %}
+<div class="container">
+    <h1 class="mt-4 mb-4">Добавление пользователя</h1>
+    <div class="row">
+        <div class="col-md-6">
+        <div id="messages"></div>
+<form id="createUserForm">
+    {% csrf_token %}
+    {% for field in form %}
+        <div class="mb-3">
+            {% if field.name == 'is_staff' %}
+                <div class="form-check">
+                    {{ field|attr:"class:form-check-input"|add_class:"form-control" }}
+                    <label class="form-check-label" for="{{ field.id_for_label }}">Повышенный уровень доступа</label>
+                </div>
+            {% elif field.name == 'password1' %}
+                <label for="{{ field.id_for_label }}" class="form-label">Пароль</label>
+                {{ field|add_class:"form-control" }}
+            {% elif field.name == 'password2' %}
+                <label for="{{ field.id_for_label }}" class="form-label">Подтвердить пароль</label>
+                {{ field|add_class:"form-control" }}
+                <label>
+                    <input type="checkbox" class="form-check-input" onclick="showPassword()">Показать пароль
+                </label>
+            {% else %}
+                <label for="{{ field.id_for_label }}" class="form-label">Логин</label>
+                {{ field|add_class:"form-control" }}
+            {% endif %}
+            {% if field.errors %}
+                {% for error in field.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+            {% endif %}
+        </div>
+    {% endfor %}
+    <button type="submit" class="btn btn-primary">Создать</button>
+</form>
+     </div>
+    </div>
+        </div>
+{% endblock %}
+{% block extra_js %}
+   <script>
+       $(document).ready(function() {
+    $('#createUserForm').on('submit', function(event) {
+        event.preventDefault();
+
+        $.ajax({
+            url: '{% url 'create_user' %}',
+            type: 'POST',
+            data: $(this).serialize(),
+            dataType: 'json',
+            success: function(data) {
+                // Clear previous messages
+                $('#messages').empty();
+                $('.invalid-feedback').remove();
+
+                // Show success message
+                $('#messages').html('<div class="alert alert-success">' + data.message + '</div>');
+            },
+            error: function(data) {
+                // Clear previous messages
+                $('#messages').empty();
+                $('.invalid-feedback').remove();
+
+                // Show errors
+                $.each(data.responseJSON.errors, function(key, value) {
+                    $('#' + key).after('<div class="invalid-feedback">' + value + '</div>');
+                    $('#messages').append('<div class="alert alert-danger">' + value + '</div>');
+                });
+            }
+        });
+    });
+});
+
+</script>
+<script>
+function showPassword() {
+    var passwordInput = document.getElementById("passwordInput");
+    var passwordConfirmInput = document.getElementById("passwordConfirmInput")
+    if (passwordInput.type === "password") {
+        passwordInput.type = "text";
+        passwordConfirmInput.type = "text";
+    } else {
+        passwordInput.type = "password";
+        passwordConfirmInput.type = "password";
+    }
+}
+</script>{% endblock %}

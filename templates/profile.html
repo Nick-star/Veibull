@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Профиль{% endblock %}
+{% block content %}
+<div class="container">
+    <h1 class="my-4">Профиль пользователя</h1>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ username }}</h5>
+                    {% if is_staff %}
+                        <p class="card-text">У вас повышенный уровень доступа.</p>
+                    {% else %}
+                        <p class="card-text">У вас обычный уровень доступа.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

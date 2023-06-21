@@ -14,4 +14,4 @@ urlpatterns = [
     path('add_building/', views.add_building, name='add_building'),
     path('add_electrolyzer_type/', views.add_electrolyzer_type, name='add_electrolyzer_type'),
     path('edit-electrolyzer/<int:electrolyzer_id>/', views.edit_electrolyzer, name='edit_electrolyzer'),
-] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+]

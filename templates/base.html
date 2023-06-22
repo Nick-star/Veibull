@@ -33,14 +33,22 @@
                         <a class="nav-link" href="{% url 'upload_file' %}"><i class="fas fa-upload"></i></a>
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url "create_user" %}"><i class="fa-solid fa-user-plus"></i></a>
-                    </li>
                         <li class="nav-item">
                         <a class="nav-link" href="{% url 'tb_add' %}"><i class="fas fa-plus"></i></a>
                     </li>
                     {% endif %}
+                    {% if user.is_superuser %}
+                        <li class="nav-item">
+                        <a class="nav-link" href="{% url "create_user" %}"><i class="fa-solid fa-user-plus"></i></a>
+                    </li>
+                        <li class="nav-item">
+                        <a class="nav-link" href="{% url "change_password" %}"><i class="fa-sharp fa-solid fa-key"></i></a>
+                    </li>
+                    {% endif %}
                     {% if user.is_authenticated %}
+                        <li class="nav-item">
+                            <a href="{% url 'profile' %}" class="nav-link"><i class="fa-sharp fa-solid fa-id-card"></i></a>
+                        </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i></a>
                             </li>

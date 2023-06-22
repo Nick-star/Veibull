@@ -3,6 +3,8 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.http import JsonResponse
 from django import forms
+from django.contrib.auth.forms import SetPasswordForm
+from django.contrib.auth.models import User
 from django.contrib import messages
 
 class CreateUserForm(UserCreationForm):
@@ -27,10 +29,26 @@ def create_user(request):
 
     return render(request, 'create_user.html', {'form': form})
 
+@user_passes_test(lambda u: u.is_superuser)
+def change_password(request):
+    if request.method == 'POST':
+        user_id = request.POST.get('user')
+        form = SetPasswordForm(User.objects.get(pk=user_id), request.POST)
+        if form.is_valid():
+            user = form.save()
+            return JsonResponse({'message': 'Пароль был успешно изменен'})
+        else:
+            return JsonResponse({'errors': form.errors}, status=400)
+    else:
+        form = SetPasswordForm(User())
+        users = User.objects.all()
+        return render(request, 'change_password.html', {'form': form, 'users': users})
+
 
 @login_required
 def profile(request):
     context = {
+        'is_superuser': request.user.is_superuser,
         'is_staff': request.user.is_staff,
         'username': request.user.username,
     }

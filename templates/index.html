@@ -3,16 +3,12 @@
 {% block title %}Главная{% endblock %}
 
 {% block content %}
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.23/css/jquery.dataTables.min.css"/>
-    <link rel="stylesheet" type="text/css"
-          href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.dataTables.min.css"/>
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.3/css/dataTables.bootstrap5.min.css"/>
-
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css"/>
     <div class="container">
         <h1 id="fade-in-text" class="display-1 text-center mb-4">РУСАЛ</h1>
         <h1 id="electrolyzer-title" class="text-center mb-4">Электролизёры</h1>
         <div class="table-responsive">
-            <table id="datatable" class="datatable table table-striped">
+            <table id="datatable" class="table table-striped" style="width:100%">
                 <thead>
                 <tr>
                     <th scope="col">Номер</th>
@@ -48,10 +44,10 @@
         </div>
     </div>
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/1.10.23/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
     <script type="text/javascript"
             src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/1.11.3/js/dataTables.bootstrap5.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
     <script type="text/javascript">
     $(document).ready(function () {
         $('#datatable').DataTable({

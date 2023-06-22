@@ -1,0 +1,51 @@
+$white: #ffffff;
+
+$theme-colors: (
+    "light":      #e7e4e7,
+    "dark":       #211327,
+    "primary":    #0c4073,
+    "secondary":  #2d54cd,
+    "info":       #2a74d3,
+    "success":    #0e9755,
+    "warning":    #dfc710,
+    "danger":     #ed1206,
+);
+
+
+@import "../../node_modules/bootstrap/scss/bootstrap.scss";
+
+body {
+    background-color: map-get($theme-colors, light);
+}
+
+
+.menu_simple {
+	width: 100%;
+	background-color: #005555;
+	ul {
+		margin: 0;
+		padding: 0;
+		float: left;
+		li {
+			display: inline;
+			a {
+				float: left;
+				text-decoration: none;
+				color: white;
+				padding: 10.5px 11px;
+				background-color: #005555;
+				&:visited {
+					color: white;
+				}
+				&:hover {
+					color: white;
+					background-color: #5FD367;
+				}
+			}
+			.current {
+				color: white;
+				background-color: #5FD367;
+			}
+		}
+	}
+}

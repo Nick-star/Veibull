@@ -1,51 +1,51 @@
 {% extends 'base.html' %}
 {% block title %}График{% endblock %}
 {% block content %}
-    <div class="container">
+    <div class="container rounded card bg-dark text-white mt-3 px-4 py-2">
         <div class="row">
-            <div>
-                <h1>Диаграмма срока службы электролизера</h1>
+            <div class="col text-center mb-3">
+                <h2>Диаграмма срока службы электролизера</h2>
             </div>
         </div>
         <div class="row">
-            <div class="col-md-3">
+            <div class="col-md-3 mb-3">
                 <div class="form-group">
                     <label for="electrolyzer-type">Тип:</label>
                     <select id="electrolyzer-type" class="form-control">
                     </select>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-3 mb-3">
                 <div class="form-group">
                     <label for="building">Корпус:</label>
                     <select id="building" class="form-control">
                     </select>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-3 mb-3">
                 <div class="form-group">
                     <label for="start-date">Дата начала:</label>
                     <input type="date" id="start-date" class="form-control" value="2010-01-01">
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-3 mb-3">
                 <div class="form-group">
                     <label for="end-date">Дата конца:</label>
                     <input type="date" id="end-date" class="form-control">
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-3 mb-3">
                 <div class="form-group">
                     <label for="forecast-date">Дата прогноза:</label>
                     <input type="date" id="forecast-date" class="form-control">
                 </div>
             </div>
-            <div class="col-md-3 col-sm d-flex align-items-end">
+            <div class="col-md-3 col-sm d-flex align-items-end mb-3">
                 <button id="update-chart" class="btn btn-primary">Обновить</button>
             </div>
         </div>
-        <div class="row">
-            <div class="col">
+        <div class="row mb-3">
+            <div class="col rounded chart-container">
                 <div id="chart"></div>
             </div>
         </div>

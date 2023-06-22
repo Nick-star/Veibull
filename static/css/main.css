@@ -11862,6 +11862,17 @@ body {
   background-color: #e7e4e7;
 }
 
+.large-checkbox {
+  padding-top: 20px;
+  font-size: 20px;
+}
+
+.chart-container {
+  border-radius: 15px;
+  padding: 10px;
+  overflow: hidden;
+}
+
 .menu_simple {
   width: 100%;
   background-color: #005555;

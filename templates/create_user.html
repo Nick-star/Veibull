@@ -13,7 +13,7 @@
     {% for field in form %}
         <div class="mb-3">
             {% if field.name == 'is_staff' %}
-                <div class="form-check">
+                <div class="form-check large-checkbox">
                     {{ field|attr:"class:form-check-input"|add_class:"form-control" }}
                     <label class="form-check-label" for="{{ field.id_for_label }}">Повышенный уровень доступа</label>
                 </div>

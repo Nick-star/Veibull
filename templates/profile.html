@@ -2,23 +2,66 @@
 {% load static %}
 {% block title %}Профиль{% endblock %}
 {% block content %}
-<div class="container">
-    <h1 class="my-4">Профиль пользователя</h1>
-    <div class="row">
+    <div class="container">
+        <h1 class="my-4">Профиль пользователя</h1>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ username }}</h5>
+                        {% if is_superuser %}
+                            <p class="card-text">У вас супер уровень доступа.</p>
+                        {% elif is_staff %}
+                            <p class="card-text">У вас повышенный уровень доступа.</p>
+                        {% else %}
+                            <p class="card-text">У вас обычный уровень доступа.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% if is_staff %}
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Действия пользователей с повышенным уровнем доступа</h5>
+                            <p class="card-text">
+                                <a href="{% url 'tb_add' %}" class="custom-link">
+                                    <i class="fas fa-plus" aria-hidden="true"></i>
+                                    Добавить тип электролизёра и завод
+                                </a>
+                            </p>
+                            <p class="card-text">
+                                <a href="{% url 'upload_file' %}" class="custom-link">
+                                    <i class="fa fa-upload me-2" aria-hidden="true"></i>
+                                    Загрузить файл
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+    {% if is_superuser %}
         <div class="col-md-6">
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title">{{ username }}</h5>
-                    {% if is_superuser %}
-                        <p class="card-text">У вас супер уровень доступа.</p>
-                        {% elif is_staff %}
-                        <p class="card-text">У вас повышенный уровень доступа.</p>
-                    {% else %}
-                        <p class="card-text">У вас обычный уровень доступа.</p>
-                    {% endif %}
+                    <h5 class="card-title">Действия суперпользователя</h5>
+                    <p class="card-text">
+                        <a href="{% url 'create_user' %}" class="custom-link">
+                            <i class="fa fa-user-plus me-2" aria-hidden="true"></i>
+                            Создать пользователя
+                        </a>
+                    </p>
+                    <p class="card-text">
+                        <a href="{% url 'change_password' %}" class="custom-link">
+                            <i class="fa fa-lock me-2" aria-hidden="true"></i>
+                            Сменить пароль
+                        </a>
+                    </p>
                 </div>
             </div>
         </div>
-    </div>
-</div>
+        </div>
+        </div>
+        
+    {% endif %}
 {% endblock %}

@@ -29,6 +29,17 @@ body {
     overflow: hidden;
 }
 
+.custom-link {
+    color: map-get($theme-colors, dark);
+    text-decoration: none;
+}
+
+.custom-link:hover {
+    color: map-get($theme-colors, dark);
+    text-decoration: underline;
+}
+
+
 .menu_simple {
 	width: 100%;
 	background-color: #005555;

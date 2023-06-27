@@ -11873,6 +11873,16 @@ body {
   overflow: hidden;
 }
 
+.custom-link {
+  color: #211327;
+  text-decoration: none;
+}
+
+.custom-link:hover {
+  color: #211327;
+  text-decoration: underline;
+}
+
 .menu_simple {
   width: 100%;
   background-color: #005555;

@@ -7,57 +7,57 @@
         <div class="row">
             <div class="col-md-6">
                 <form id="building-form">
-                    <h2>Добавить здание</h2>
+                    <h2 class="mb-3">Добавить здание</h2>
                     {% csrf_token %}
                     <div class="form-group">
                         {% render_field building_form.name class="form-control" %}
                     </div>
-                    <button type="submit" class="btn btn-primary">Добавить</button>
+                    <button type="submit" class="btn btn-primary mt-3">Добавить</button>
                 </form>
             </div>
 
             <div class="col-md-6">
                 <form id="electrolyzer-type-form">
-                    <h2>Добавить тип электролизёра</h2>
+                    <h2 class="mb-3">Добавить тип электролизёра</h2>
                     {% csrf_token %}
                     <div class="form-group">
                         {% render_field electrolyzer_type_form.name class="form-control" %}
                     </div>
-                    <button type="submit" class="btn btn-primary">Добавить</button>
+                    <button type="submit" class="btn btn-primary mt-3">Добавить</button>
                 </form>
             </div>
         </div>
     </div>
 
-<script>
-    $(document).ready(function () {
-        // AJAX for posting
-        $("#building-form").on('submit', function (event) {
-            event.preventDefault();
-            create_post('#building-form', "{% url 'add_building' %}");
-        });
-
-        $("#electrolyzer-type-form").on('submit', function (event) {
-            event.preventDefault();
-            create_post('#electrolyzer-type-form', "{% url 'add_electrolyzer_type' %}");
-        });
-
-        function create_post(formId, url) {
-            $.ajax({
-                url: url,
-                type: "POST",
-                data: $(formId).serialize(),
-
-                success: function (json) {
-                    $('#form-messages').html("<div class='alert alert-success'>" + json.message + "</div>");
-                    $(formId)[0].reset();
-                },
-
-                error: function (xhr, errmsg, err) {
-                    $('#form-messages').html("<div class='alert alert-danger'>Ошибка: " + errmsg + "</div>");
-                }
+    <script>
+        $(document).ready(function () {
+            // AJAX for posting
+            $("#building-form").on('submit', function (event) {
+                event.preventDefault();
+                create_post('#building-form', "{% url 'add_building' %}");
             });
-        };
-    });
-</script>
+
+            $("#electrolyzer-type-form").on('submit', function (event) {
+                event.preventDefault();
+                create_post('#electrolyzer-type-form', "{% url 'add_electrolyzer_type' %}");
+            });
+
+            function create_post(formId, url) {
+                $.ajax({
+                    url: url,
+                    type: "POST",
+                    data: $(formId).serialize(),
+
+                    success: function (json) {
+                        $('#form-messages').html("<div class='alert alert-success'>" + json.message + "</div>");
+                        $(formId)[0].reset();
+                    },
+
+                    error: function (xhr, errmsg, err) {
+                        $('#form-messages').html("<div class='alert alert-danger'>Ошибка: " + errmsg + "</div>");
+                    }
+                });
+            }
+        });
+    </script>
 {% endblock %}

@@ -5,8 +5,14 @@ from rdp import rdp
 import numpy as np
 import pandas as pd
 
+DAYS_TO_MONTHS = 30.4167
+
 
 # TODO Write type annotations.
+
+def days_to_months(days: int):
+    return days / DAYS_TO_MONTHS
+
 
 def calculate_days(data: pd.DataFrame, start_date, end_date,
                    censor_date=None, launch_column: str = 'launch_date',
@@ -61,46 +67,56 @@ def censor_dates(data: pd.DataFrame, censor_date, launch_column: str = 'launch_d
     return data
 
 
-def cumulative_function_y(data: np.ndarray, length: Optional[int] = None, sort: bool = True):
+def empirical_cdf(x: np.ndarray, censored: np.ndarray, length: int = None, sort: bool = True) -> np.ndarray:
     """
-    :param data:
+    :param censored:
+    :param x:
     :param length:
     :param sort: True если массив не отсортирован.
     :return:
     """
+    data_length = len(x) + len(censored)
     if length is None:
-        length = len(data)
+        length = len(x)
 
     if sort:
-        data.sort()
+        x.sort()
+    # x_list = list(x)
+    # x_censored_list = list(censored)
+    # x_list.sort()
+    # x_censored_list.sort()
+    print(length)
+    y = np.empty(length, dtype=float)
+    curr_index = 0
+    for i in range(1, length + 1):
+        y[curr_index] = (i - 0.3) / (data_length + 0.4)
+        curr_index += 1
 
-    iterable = (((i + 1) / length) for i, _ in enumerate(data))
-    return np.fromiter(iterable, float)
+    # iterable = ((i / length) for i in range(1, data_length + 1))
+    return np.column_stack((x, y))
 
 
 def quantile(p: float, shape: float, scale: float):
     return scale * np.power(-np.log(1 - p), 1 / shape)
 
 
-def optimize_curve(x: np.ndarray, y: np.ndarray, epsilon: float) -> Tuple[np.ndarray, np.ndarray]:
+def optimize_curve(points: np.ndarray, epsilon: float) -> np.ndarray:
     scaler = MinMaxScaler()
-    points = np.column_stack((x, y))
     points = scaler.fit_transform(points)
     points = rdp(points, epsilon)
     points = scaler.inverse_transform(points)
-    del scaler
-    return points[:, 0], points[:, 1]
+    return points
 
 
 def weibull_cdf(shape: float, scale: float, num: int = 50, xmax: float = None,
-                xmin: float = None) -> Tuple[np.ndarray, np.ndarray]:
+                xmin: float = None) -> np.ndarray:
     if xmax is None:
         xmax = quantile(0.999, shape, scale)
     if xmin is None:
         xmin = quantile(0.001, shape, scale)
     x = np.linspace(xmin, xmax, num)
     y = 1 - np.exp(-np.power(x / scale, shape))
-    return x, y
+    return np.column_stack((x, y))
 
 
 def drop_outliers(data: pd.DataFrame, column: str, sigma: float = 3):

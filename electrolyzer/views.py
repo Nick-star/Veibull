@@ -2,15 +2,15 @@ import math
 
 import numpy as np
 import pandas as pd
+from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from reliability.Fitters import Fit_Weibull_2P
 
 from .forms import UploadFileForm, BuildingForm, ElectrolyzerTypeForm, ElectrolyzerForm
-from .models import Electrolyzer, ElectrolyzerType, Building
-from .utils import censor_dates, optimize_curve, weibull_cdf, cumulative_function_y
+from .models import Electrolyzer, PartType, Building, Part
+from .utils import censor_dates, optimize_curve, weibull_cdf, empirical_cdf
 
 
 @login_required
@@ -25,7 +25,8 @@ def edit_electrolyzer(request, electrolyzer_id):
     else:
         form = ElectrolyzerForm(instance=electrolyzer)
 
-    electrolyzer_types = ElectrolyzerType.objects.all()
+    electrolyzer_types = PartType.objects.all()
+    # TODO
     buildings = Building.objects.all()
 
     context = {
@@ -35,6 +36,7 @@ def edit_electrolyzer(request, electrolyzer_id):
         'electrolyzer_types': electrolyzer_types,
     }
     return render(request, 'edit_electrolyzer.html', context)
+
 
 @login_required
 def upload_file(request):
@@ -46,10 +48,10 @@ def upload_file(request):
                 file = request.FILES['file']
                 file_extension = file.name.split('.')[-1]
 
-                electrolyzer_type = form.cleaned_data['electrolyzer_type']
+                part_type = form.cleaned_data['part_type']
                 building = form.cleaned_data['building']
 
-                important_cols = ['№ эл-ра', 'Дата пуска', 'Дата откл.']
+                important_cols = ['№', 'Дата запуска', 'Дата поломки']
                 if file_extension == 'csv':
                     data = pd.read_csv(file, usecols=important_cols)
                 elif file_extension in ['xls', 'xlsx']:
@@ -57,26 +59,20 @@ def upload_file(request):
                 else:
                     raise ValueError("Недопустимый формат файла")
 
-                data.columns = ['id', 'launch_date', 'failure_date']
-                data.loc[data['failure_date'].notnull(), 'days_up'] = (
-                        data['failure_date'] - data['launch_date']).dt.days
-                Electrolyzer.objects.all().delete()
-                els_to_create = []
-                for row in data.itertuples(index=False):
-                    failure_date, days_up = row[2], row[3]
-                    if math.isnan(days_up):
-                        failure_date, days_up = None, None
-                    els_to_create.append(Electrolyzer(
-                        number=row[0],
-                        launch_date=row[1],
-                        failure_date=failure_date,
-                        days_up=days_up,
-                        electrolyzer_type=electrolyzer_type,
-                        building=building
-                    ))
+                data.columns = ['number', 'launch_date', 'failure_date']
 
-                print(f'Created {len(els_to_create)} electrolyzers.')
-                Electrolyzer.objects.bulk_create(els_to_create)
+                if data[['number', 'launch_date']].isnull().values.any():
+                    raise ValueError('Столбцы "Номер" "Дата запуска" не должны содержать пропущенных значений.')
+                data['number'] = data['number'].astype(int)
+                data[['launch_date', 'failure_date']] = data[['launch_date', 'failure_date']].apply(pd.to_datetime)
+
+                for row in data.itertuples(index=False):
+                    new_part, _ = Part.objects.get_or_create(number=row[0], part_type=part_type,
+                                                             building=building)
+                    if pd.isnull(row[2]):
+                        new_part.history_set.create(launch_date=row[1])
+                    else:
+                        new_part.history_set.create(launch_date=row[1], failure_date=row[2])
 
                 return redirect('chart')
         except Exception as e:
@@ -98,12 +94,13 @@ def chart(request):
 
 
 def get_electrolyzer_types(request):
-    electrolyzer_types = ElectrolyzerType.objects.all()
+    electrolyzer_types = PartType.objects.all()
     data = [{'id': et.id, 'name': et.name} for et in electrolyzer_types]
     return JsonResponse(data, safe=False)
 
 
 def get_buildings(request):
+    # TODO
     building = Building.objects.all()
     data = [{'id': b.id, 'name': b.name} for b in building]
     return JsonResponse(data, safe=False)
@@ -126,39 +123,39 @@ def get_electrolyzer_data(request):
     df = censor_dates(df, censor_date)
 
     fit = Fit_Weibull_2P(failures=np.array(df[df['days_up'].notnull()]['days_up']),
+                         right_censored=np.array(df[df['running_days'].notnull()]['running_days']),
                          print_results=False,
                          show_probability_plot=False)
 
-    days = (pd.to_datetime(censor_date) - pd.to_datetime(end_search_date)).days * 1.5
-    x, y = weibull_cdf(fit.beta, fit.alpha)
-    x, y = optimize_curve(x, y, 0.01)
-    y *= 100
+    days = (pd.to_datetime(censor_date) - pd.to_datetime(end_search_date)).days
+    print(days)
+    weibull_curve = weibull_cdf(fit.beta, fit.alpha)
+    weibull_curve = optimize_curve(weibull_curve, 0.01)
 
-    x_2 = np.array(df['days_up'].dropna())
+    empirical_curve = empirical_cdf(np.array(df['days_up'].dropna()), np.array(df['running_days'].dropna()))
+    empirical_curve = optimize_curve(empirical_curve, 0.01)
 
-    # x_2_cut = x_2[x_2 <= ]
-    y_2 = cumulative_function_y(x_2, len(x_2)) * 100
-    x_2, y_2 = optimize_curve(x_2, y_2, 0.01)
-
-    name = ElectrolyzerType.objects.get(pk=electrolyzer_type_id).name
-    count = len(df[df['days_up'].isnull()])
-    failed_percent = 1 - np.exp(-np.power(days / fit.alpha, fit.beta))
+    name = PartType.objects.get(pk=electrolyzer_type_id).name
+    count = len(df[df['days_up'].isnull()].index)
+    count_failed = len(df[df['days_up'].notnull()].index)
+    failed_percent = 1 - math.exp(-math.pow(days / fit.alpha, fit.beta))
     response = {
         'weibull': {
             'name': name + ' рассчитанный',
-            'x': list(x / 30.4167),
-            'y': list(y)
+            'x': list(weibull_curve[:, 0] / 30.4167),
+            'y': list(weibull_curve[:, 1] * 100)
         },
         'empirical': {
             'name': name,
-            'x': list(x_2 / 30.4167),
-            'y': list(y_2)
+            'x': list(empirical_curve[:, 0] / 30.4167),
+            'y': list(empirical_curve[:, 1] * 100)
         },
+        # TODO
         'building': Building.objects.get(pk=building).name,
         'type': name,
         'date_range': f'{start_search_date} {end_search_date}',
         'working_count': count,
-        'failed_count': f'{count * float(failed_percent):.2f}',
+        'failed_count': f'{count * failed_percent:.2f}',
         'censor': censor_date,
         'dates': {
             'date_start': start_search_date,

@@ -1,90 +1,124 @@
 {% extends 'base.html' %}
+{% load widget_tweaks %}
 {% block title %}График{% endblock %}
 {% block content %}
-    <div class="container rounded card bg-dark text-white mt-3 px-4 py-2">
-        <div class="row">
-            <div class="col text-center mb-3">
-                <h2>Диаграмма срока службы электролизера</h2>
-            </div>
+    <h1>Диаграмма сроков службы</h1>
+    <form method="post" id="chart-form" class="row">
+        <div class="form-group col-md-3 mb-3">
+            <label for="factory" class="form-label">Завод:</label>
+            <select id="factory" class="form-control form-select">
+                <option disabled selected value>(Пусто)</option>
+            </select>
         </div>
-        <div class="row">
-            <div class="col-md-3 mb-3">
-                <div class="form-group">
-                    <label for="electrolyzer-type">Тип:</label>
-                    <select id="electrolyzer-type" class="form-control">
-                    </select>
-                </div>
-            </div>
-            <div class="col-md-3 mb-3">
-                <div class="form-group">
-                    <label for="building">Корпус:</label>
-                    <select id="building" class="form-control">
-                    </select>
-                </div>
-            </div>
-            <div class="col-md-3 mb-3">
-                <div class="form-group">
-                    <label for="start-date">Дата начала:</label>
-                    <input type="date" id="start-date" class="form-control" value="2010-01-01">
-                </div>
-            </div>
-            <div class="col-md-3 mb-3">
-                <div class="form-group">
-                    <label for="end-date">Дата конца:</label>
-                    <input type="date" id="end-date" class="form-control">
-                </div>
-            </div>
-            <div class="col-md-3 mb-3">
-                <div class="form-group">
-                    <label for="forecast-date">Дата прогноза:</label>
-                    <input type="date" id="forecast-date" class="form-control">
-                </div>
-            </div>
-            <div class="col-md-3 col-sm d-flex align-items-end mb-3">
-                <button id="update-chart" class="btn btn-primary">Обновить</button>
-            </div>
+        <div class="form-group col-md-3 mb-3">
+            <label for="building" class="form-label">Корпус:</label>
+            <select id="building" class="form-control form-select" disabled>
+                <option disabled selected value>(Пусто)</option>
+            </select>
         </div>
-        <div class="row mb-3">
-            <div class="col rounded chart-container">
-                <div id="chart"></div>
-            </div>
+        <div class="form-group col-md-3 mb-3">
+            <label for="part-type" class="form-label">Тип:</label>
+            <select id="part-type" class="form-control form-select">
+                <option disabled selected value>(Пусто)</option>
+            </select>
         </div>
-        <div class="row">
-            <div class="col">
-                <div class="table-responsive">
-                    <table id="tableforecast" class="table table-striped table-bordered">
-                        <thead>
-                        <tr>
-                            <th scope="col">Корпус</th>
-                            <th scope="col">Тип</th>
-                            <th scope="col">Даты</th>
-                            <th scope="col">Действующих, шт</th>
-                            <th scope="col">Дата прогноза</th>
-                            <th scope="col">Отключений, шт</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr>
-                            <td id="building1"></td>
-                            <td id="type"></td>
-                            <td id="dates-range"></td>
-                            <td id="working-count"></td>
-                            <td id="est-date"></td>
-                            <td id="failed-count"></td>
-                        </tr>
-                    </table>
-                </div>
-            </div>
+        <div class="form-group col-md-3 mb-3">
+            <label for="start-date" class="form-label">Дата начала:</label>
+            <input type="date" id="start-date" class="form-control">
         </div>
+        <div class="form-group col-md-3 mb-3">
+            <label for="end-date" class="form-label">Дата конца:</label>
+            <input type="date" id="end-date" class="form-control">
+        </div>
+        <div class="form-group col-md-3 mb-3">
+            <label for="forecast-date" class="form-label">Дата прогноза:</label>
+            <input type="date" id="forecast-date" class="form-control">
+        </div>
+        <div class="col-12">
+            <input type="submit" class="btn btn-primary" value="Обновить">
+        </div>
+    </form>
+    <div id="chart"></div>
+
+    <div class="table-responsive">
+        <table id="tableforecast" class="table table-striped table-bordered">
+            <thead>
+            <tr>
+                <th scope="col">Корпус</th>
+                <th scope="col">Тип</th>
+                <th scope="col">Даты</th>
+                <th scope="col">Действующих, шт</th>
+                <th scope="col">Дата прогноза</th>
+                <th scope="col">Отключений, шт</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td id="building1"></td>
+                <td id="type"></td>
+                <td id="dates-range"></td>
+                <td id="working-count"></td>
+                <td id="est-date"></td>
+                <td id="failed-count"></td>
+            </tr>
+        </table>
     </div>
-    <script>
-        $(document).ready(function () {
-            $('#tableforecast').DataTable();
-        });
-    </script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script>
+        $(document).ready(function () {
+            // TODO delete this
+            window.onbeforeunload = function () {
+                $('form').each(function () {
+                    this.reset();
+                });
+            };
+        });
+
+        let chart_form = $('#chart-form');
+        let factory = chart_form.find('#factory');
+        let building = chart_form.find('#building');
+        let part_type = chart_form.find('#part-type');
+        let start_date = chart_form.find('#start-date');
+        let end_date = chart_form.find('#end-date');
+        let forecast_date = chart_form.find('#forecast-date');
+        building.prop('disabled', true);
+
+        $.getJSON("{% url 'get_factories' %}", function (response) {
+            populate_options(factory, response);
+        });
+
+        $.getJSON("{% url 'get_part_types' %}", function (response) {
+            populate_options(part_type, response);
+        });
+
+        $.getJSON("{% url 'get_oldest_date' %}", function (response) {
+            start_date.val(response.date);
+        });
+
+
+        factory.on('input', function () {
+            let factory_id = $(this).val().trim();
+            if (factory_id !== '') {
+                building.prop('disabled', false);
+                $.getJSON("{% url 'get_buildings' %}", {factory_id: factory_id}, function (response) {
+                    populate_options(building, response);
+                });
+            } else {
+                building.prop('disabled', true);
+            }
+        });
+
+
+        function populate_options(obj, values) {
+            values.forEach(function (value) {
+                let option = $('<option>');
+                option.val(value.id);
+                option.text(value.name);
+                obj.append(option);
+            })
+        }
+
         function dateToString(date) {
             let month = '' + (date.getMonth() + 1),
                 day = '' + date.getDate(),
@@ -98,111 +132,91 @@
             return [year, month, day].join('-');
         }
 
-        // Get today's date and the date one year from today
         let today = new Date();
         let nextYear = new Date();
+
         nextYear.setFullYear(today.getFullYear() + 1);
 
-        // Set default end and forecast dates
-        $('#end-date').val(dateToString(today));
-        $('#forecast-date').val(dateToString(nextYear));
+        end_date.val(dateToString(today));
+        forecast_date.val(dateToString(nextYear));
 
-        // Populate electrolyzer_type dropdown
-        $.getJSON("{% url 'get_electrolyzer_types' %}", function (response) {
-            let electrolyzerTypeSelect = $('#electrolyzer-type');
-            response.forEach(function (electrolyzerType) {
-                let option = $('<option>');
-                option.val(electrolyzerType.id);
-                option.text(electrolyzerType.name);
-                electrolyzerTypeSelect.append(option);
+        chart_form.on('submit', function (e) {
+            e.preventDefault();
+
+            let form = $(this);
+            let isValid = true;
+
+            form.find('.form-control').each(function () {
+                let value = $(this).val()
+                if (value === null) {
+                    isValid = false;
+                    $(this).addClass('is-invalid');
+                } else if (value.trim() === '') {
+                    isValid = false;
+                    $(this).addClass('is-invalid');
+                } else {
+                    $(this).removeClass('is-invalid');
+                }
             });
 
-            // Set the default electrolyzer type to 1
-            electrolyzerTypeSelect.val('1');
-
-            // Initial chart update after the electrolyzer type has been set
-            $.getJSON("{% url 'get_buildings' %}", function (response) {
-                let buildingSelect = $('#building');
-                response.forEach(function (building) {
-                    let option = $('<option>');
-                    option.val(building.id);
-                    option.text(building.name);
-                    buildingSelect.append(option);
-                });
-
-                // Set the default building to 1
-                buildingSelect.val('1');
-
-                // Initial chart update after the electrolyzer type and building have been set
-                updateChart();
-            });
+            if (isValid) {
+                update_chart();
+            }
         });
 
-        function updateChart() {
-            let startDate = $('#start-date').val();
-            let endDate = $('#end-date').val();
-            let forecastDate = $('#forecast-date').val();
-            let electrolyzerType = $('#electrolyzer-type').val();
-            let building = $('#building').val();
 
-            if (new Date(endDate) <= new Date(startDate) || new Date(forecastDate) <= new Date(endDate)) {
+        function update_chart() {
+            let start_date_val = start_date.val();
+            let end_date_val = end_date.val();
+            let forecast_date_val = forecast_date.val();
+            let part_type_val = part_type.val();
+            let building_val = building.val();
+
+            if (new Date(end_date_val) <= new Date(start_date_val) || new Date(forecast_date_val) <= new Date(end_date_val)) {
                 alert('Неверные даты. Убедитесь, что Дата окончания > Дата начала и Дата прогноза > Дата окончания.');
                 return;
             }
 
-            // Use these dates to update the chart
             $.getJSON("{% url 'get_electrolyzer_data' %}", {
-                start_date: startDate,
-                end_date: endDate,
-                forecast_date: forecastDate,
-                electrolyzer_type: electrolyzerType,
-                building: building
+                start_date: start_date_val,
+                end_date: end_date_val,
+                forecast_date: forecast_date_val,
+                part_type: part_type_val,
+                building: building_val,
             }, function (response) {
-                var weibullX = response.weibull.x;
-                var weibullY = response.weibull.y;
-                var empiricalX = response.empirical.x;
-                var empiricalY = response.empirical.y;
-
-                var trace1 = {
-                    x: weibullX,
-                    y: weibullY,
+                let trace1 = {
+                    x: response.weibull.x,
+                    y: response.weibull.y,
                     mode: 'lines',
-                    name: response.weibull.name,
+                    name: response.type,
                     line: {
                         shape: 'spline'
                     }
                 };
 
-                var trace2 = {
-                    x: empiricalX,
-                    y: empiricalY,
+                let trace2 = {
+                    x: response.empirical.x,
+                    y: response.empirical.y,
                     mode: 'lines',
-                    name: response.empirical.name,
+                    name: response.type + " теор.",
                     line: {
                         shape: 'spline'
                     }
                 };
 
-                var data = [trace1, trace2];
+                let data = [trace1, trace2];
 
                 let layout = {
                     xaxis: {title: 'Накопленный (средний) срок службы, мес'},
                     yaxis: {title: 'Кол-во отключенных, %'},
-                    autosize: true
+                    autosize: true,
+                    legend: {"orientation": "h"}
                 };
 
-                document.getElementById("building1").innerText = response.building;
-                document.getElementById("type").innerText = response.type;
-                document.getElementById("working-count").innerText = response.working_count;
-                document.getElementById("failed-count").innerText = response.failed_count;
-                document.getElementById("dates-range").innerText = response.date_range;
-                document.getElementById("est-date").innerText = response.censor;
                 Plotly.newPlot('chart', data, layout);
-            })
-                .fail(function (jqXHR, textStatus, errorThrown) {
-                    // Display error message when AJAX call fails
-                    alert("Нет данных в выбранном диапазоне дат. Пожалуйста, выберите другой диапазон.");
-                });
+            }).fail(function () {
+                alert("Нет данных в выбранном диапазоне дат. Пожалуйста, выберите другой диапазон.");
+            });
         }
 
         $(window).resize(function () {
@@ -211,8 +225,5 @@
                 'yaxis.autorange': true
             });
         });
-
-        // Event handler for update button
-        $('#update-chart').click(updateChart);
     </script>
 {% endblock %}

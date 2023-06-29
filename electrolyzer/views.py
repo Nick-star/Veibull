@@ -9,7 +9,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from reliability.Fitters import Fit_Weibull_2P
 
 from .forms import UploadFileForm, BuildingForm, ElectrolyzerTypeForm, ElectrolyzerForm
-from .models import Electrolyzer, PartType, Building, Part
+from .models import Electrolyzer, PartType, Building, Part, Factory
 from .utils import censor_dates, optimize_curve, weibull_cdf, empirical_cdf
 
 
@@ -63,6 +63,7 @@ def upload_file(request):
 
                 if data[['number', 'launch_date']].isnull().values.any():
                     raise ValueError('Столбцы "Номер" "Дата запуска" не должны содержать пропущенных значений.')
+
                 data['number'] = data['number'].astype(int)
                 data[['launch_date', 'failure_date']] = data[['launch_date', 'failure_date']].apply(pd.to_datetime)
 
@@ -93,75 +94,73 @@ def chart(request):
     return render(request, 'chart.html')
 
 
-def get_electrolyzer_types(request):
-    electrolyzer_types = PartType.objects.all()
-    data = [{'id': et.id, 'name': et.name} for et in electrolyzer_types]
+def get_factories(request):
+    factories = Factory.objects.all()
+    data = [{'id': f.id, 'name': f.name} for f in factories]
     return JsonResponse(data, safe=False)
 
 
 def get_buildings(request):
-    # TODO
-    building = Building.objects.all()
-    data = [{'id': b.id, 'name': b.name} for b in building]
+    factory_id = request.GET.get('factory_id')
+    buildings = Factory.objects.get(id=factory_id).building_set.all()
+    data = [{'id': b.id, 'name': b.name} for b in buildings]
     return JsonResponse(data, safe=False)
 
 
+def get_part_types(request):
+    part_types = PartType.objects.all()
+    data = [{'id': et.id, 'name': et.name} for et in part_types]
+    return JsonResponse(data, safe=False)
+
+
+def get_oldest_date(request):
+    # TODO replace with actual
+    return JsonResponse({"date": "2010-01-01"})
+
+
 def get_electrolyzer_data(request):
-    start_search_date = request.GET.get('start_date')
-    end_search_date = request.GET.get('end_date')
-    censor_date = request.GET.get('forecast_date')
-    electrolyzer_type_id = request.GET.get('electrolyzer_type')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    forecast_date = request.GET.get('forecast_date')
+    part_type = request.GET.get('part_type')
     building = request.GET.get('building')
 
-    value_list = ["launch_date", "failure_date", "days_up"]
-    values = Electrolyzer.objects.filter(
-        Q(electrolyzer_type=electrolyzer_type_id) & Q(building=building) & Q(
-            launch_date__range=[start_search_date, end_search_date])
-    ).values(*value_list)
+    values = Part.objects.filter(
+        Q(part_type_id=part_type, building_id=building, history__launch_date__range=[start_date, end_date]) & (
+                Q(history__failure_date__isnull=True) |
+                Q(history__failure_date__range=[start_date, end_date]))).distinct().values("history__launch_date",
+                                                                                           "avg_days")
 
     df = pd.DataFrame.from_records(values)
-    df = censor_dates(df, censor_date)
+    df.columns = ['launch_date', 'days']
+    df = censor_dates(df, end_date, failure_column='days')
 
-    fit = Fit_Weibull_2P(failures=np.array(df[df['days_up'].notnull()]['days_up']),
-                         right_censored=np.array(df[df['running_days'].notnull()]['running_days']),
+    fit = Fit_Weibull_2P(failures=np.array(df[df['days'].notnull()]['days']),
+                         # right_censored=np.array(df[df['running_days'].notnull()]['running_days']),
                          print_results=False,
                          show_probability_plot=False)
 
-    days = (pd.to_datetime(censor_date) - pd.to_datetime(end_search_date)).days
-    print(days)
+    days = (pd.to_datetime(forecast_date) - pd.to_datetime(end_date)).days
     weibull_curve = weibull_cdf(fit.beta, fit.alpha)
     weibull_curve = optimize_curve(weibull_curve, 0.01)
 
-    empirical_curve = empirical_cdf(np.array(df['days_up'].dropna()), np.array(df['running_days'].dropna()))
+    empirical_curve = empirical_cdf(np.array(df['days'].dropna()), np.array(df['running_days'].dropna()))
     empirical_curve = optimize_curve(empirical_curve, 0.01)
 
-    name = PartType.objects.get(pk=electrolyzer_type_id).name
-    count = len(df[df['days_up'].isnull()].index)
-    count_failed = len(df[df['days_up'].notnull()].index)
+    count = len(df[df['days'].isnull()].index)
     failed_percent = 1 - math.exp(-math.pow(days / fit.alpha, fit.beta))
     response = {
         'weibull': {
-            'name': name + ' рассчитанный',
             'x': list(weibull_curve[:, 0] / 30.4167),
             'y': list(weibull_curve[:, 1] * 100)
         },
         'empirical': {
-            'name': name,
             'x': list(empirical_curve[:, 0] / 30.4167),
             'y': list(empirical_curve[:, 1] * 100)
         },
-        # TODO
-        'building': Building.objects.get(pk=building).name,
-        'type': name,
-        'date_range': f'{start_search_date} {end_search_date}',
+        'type': str(PartType.objects.get(id=part_type)),
         'working_count': count,
         'failed_count': f'{count * failed_percent:.2f}',
-        'censor': censor_date,
-        'dates': {
-            'date_start': start_search_date,
-            'date_end': end_search_date,
-            'censor_date': censor_date
-        }
     }
 
     return JsonResponse(response, safe=False)

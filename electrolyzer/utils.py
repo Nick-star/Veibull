@@ -75,7 +75,7 @@ def empirical_cdf(x: np.ndarray, censored: np.ndarray, length: int = None, sort:
     :param sort: True если массив не отсортирован.
     :return:
     """
-    data_length = len(x) + len(censored)
+    # data_length = len(x) + len(censored)
     if length is None:
         length = len(x)
 
@@ -85,12 +85,14 @@ def empirical_cdf(x: np.ndarray, censored: np.ndarray, length: int = None, sort:
     # x_censored_list = list(censored)
     # x_list.sort()
     # x_censored_list.sort()
-    print(length)
+    # print(length)
     y = np.empty(length, dtype=float)
+    for i in range(length):
+        y[i] = (i + 1) / length
     curr_index = 0
-    for i in range(1, length + 1):
-        y[curr_index] = (i - 0.3) / (data_length + 0.4)
-        curr_index += 1
+    # for i in range(1, length + 1):
+    #     y[curr_index] = (i - 0.3) / (data_length + 0.4)
+    #     curr_index += 1
 
     # iterable = ((i / length) for i in range(1, data_length + 1))
     return np.column_stack((x, y))

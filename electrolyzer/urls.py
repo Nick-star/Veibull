@@ -8,10 +8,13 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('chart/', views.chart, name='chart'),
     path('get_electrolyzer_data/', views.get_electrolyzer_data, name='get_electrolyzer_data'),
-    path('get_electrolyzer_types/', views.get_electrolyzer_types, name='get_electrolyzer_types'),
-    path('get_buildings/', views.get_buildings, name='get_buildings'),
     path('tb_add/', views.tb_add, name='tb_add'),
     path('add_building/', views.add_building, name='add_building'),
     path('add_electrolyzer_type/', views.add_electrolyzer_type, name='add_electrolyzer_type'),
     path('edit-electrolyzer/<int:electrolyzer_id>/', views.edit_electrolyzer, name='edit_electrolyzer'),
-    ]
+
+    path('get_factories', views.get_factories, name='get_factories'),
+    path('get_buildings/', views.get_buildings, name='get_buildings'),
+    path('get_part_types/', views.get_part_types, name='get_part_types'),
+    path('get_oldest_date', views.get_oldest_date, name='get_oldest_date'),
+]

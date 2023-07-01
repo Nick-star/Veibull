@@ -3,19 +3,27 @@
 {% block title %}Профиль{% endblock %}
 {% block content %}
     <div class="container">
-        <h1 class="my-4">Профиль пользователя</h1>
+        <h1 class="my-4 text-center">Профиль пользователя</h1>
         <div class="row">
             <div class="col-md-6">
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">{{ username }}</h5>
-                        {% if is_superuser %}
-                            <p class="card-text">У вас супер уровень доступа.</p>
+                        <p class="card-text">У вас {% if is_superuser %}
+                            <span class="text-decoration-underline" data-bs-toggle="tooltip"
+                                  data-bs-placement="top"
+                                  title="Пользователь, который с полным доступом прав">супер</span>
                         {% elif is_staff %}
-                            <p class="card-text">У вас повышенный уровень доступа.</p>
+                            <span class="text-decoration-underline" data-bs-toggle="tooltip"
+                                  data-bs-placement="top"
+                                  title="Пользователь, который с частичным доступом прав">повышенный</span>
                         {% else %}
-                            <p class="card-text">У вас обычный уровень доступа.</p>
+                            <span class="text-decoration-underline" data-bs-toggle="tooltip"
+                                  data-bs-placement="top"
+                                  title="Пользователь, который с доступом к просмотру данных">обычный</span>
                         {% endif %}
+                            уровень доступа.
+                        </p>
                     </div>
                 </div>
             </div>
@@ -23,10 +31,10 @@
                 <div class="col-md-6">
                     <div class="card">
                         <div class="card-body">
-                            <h5 class="card-title">Действия пользователей с повышенным уровнем доступа</h5>
+                            <h5 class="card-title mb-3">Действия пользователей с повышенным уровнем доступа</h5>
                             <p class="card-text">
                                 <a href="{% url 'tb_add' %}" class="custom-link">
-                                    <i class="fas fa-plus" aria-hidden="true"></i>
+                                    <i class="fas fa-plus me-2" aria-hidden="true"></i>
                                     Добавить тип электролизёра и завод
                                 </a>
                             </p>
@@ -40,28 +48,36 @@
                     </div>
                 </div>
             {% endif %}
-    {% if is_superuser %}
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Действия суперпользователя</h5>
-                    <p class="card-text">
-                        <a href="{% url 'create_user' %}" class="custom-link">
-                            <i class="fa fa-user-plus me-2" aria-hidden="true"></i>
-                            Создать пользователя
-                        </a>
-                    </p>
-                    <p class="card-text">
-                        <a href="{% url 'change_password' %}" class="custom-link">
-                            <i class="fa fa-lock me-2" aria-hidden="true"></i>
-                            Сменить пароль
-                        </a>
-                    </p>
+            {% if is_superuser %}
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title mb-3">Действия суперпользователя</h5>
+                            <p class="card-text">
+                                <a href="{% url 'create_user' %}" class="custom-link">
+                                    <i class="fa fa-user-plus me-2" aria-hidden="true"></i>
+                                    Создать пользователя
+                                </a>
+                            </p>
+                            <p class="card-text">
+                                <a href="{% url 'change_password' %}" class="custom-link">
+                                    <i class="fa fa-lock me-2" aria-hidden="true"></i>
+                                    Сменить пароль
+                                </a>
+                            </p>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
-        </div>
-        </div>
-        
-    {% endif %}
+                </div>
+                </div>
+            {% endif %}
+    {% block extra_js %}
+        <script>
+            var tooltips = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipInstances = tooltips.map(function (tooltip) {
+                return new bootstrap.Tooltip(tooltip);
+            });
+        </script>
+    {% endblock %}
 {% endblock %}
+

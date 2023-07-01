@@ -26,7 +26,7 @@
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow">
             <div class="container">
-                <a class="navbar-brand" href="#">Veibull</a>
+                <a class="navbar-brand" href="{% url 'index' %}">Veibull</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                         data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
                         aria-label="Toggle navigation">
@@ -34,37 +34,12 @@
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav">
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'index' %}"><i
-                                    class="fas fa-table"></i></a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'chart' %}"><i
-                                    class="fas fa-chart-line"></i></a>
-                        </li>
-                        {% if user.is_staff %}
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'upload_file' %}"><i
-                                        class="fas fa-upload"></i></a>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'tb_add' %}"><i
-                                        class="fas fa-plus"></i></a>
-                            </li>
-                        {% endif %}
-                        {% if user.is_superuser %}
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url "create_user" %}"><i
-                                        class="fa-solid fa-user-plus"></i></a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url "change_password" %}"><i
-                                        class="fa-sharp fa-solid fa-key"></i></a>
-                            </li>
-                        {% endif %}
                         {% if user.is_authenticated %}
                             <li class="nav-item">
+                            <li class="nav-item">
+                            <a class="nav-link" href="{% url 'chart' %}"><i
+                                    class="fas fa-chart-line"></i></a>
+                            </li>
                                 <a href="{% url 'profile' %}" class="nav-link"><i
                                         class="fa-sharp fa-solid fa-id-card"></i></a>
                             </li>

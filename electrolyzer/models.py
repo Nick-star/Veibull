@@ -1,6 +1,6 @@
 from datetime import date
-from django.core.exceptions import ValidationError
 
+from django.core.exceptions import ValidationError
 from django.db import models
 
 

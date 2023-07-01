@@ -3,62 +3,13 @@
 {% block title %}Главная{% endblock %}
 
 {% block content %}
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css"/>
     <div class="container">
         <h1 id="fade-in-text" class="display-1 text-center mb-4">РУСАЛ</h1>
         <h1 id="electrolyzer-title" class="text-center mb-4">Электролизёры</h1>
-        <div class="table-responsive">
-            <table id="datatable" class="table table-striped" style="width:100%">
-                <thead>
-                <tr>
-                    <th scope="col">Номер</th>
-                    <th scope="col">Дата начала</th>
-                    <th scope="col">Дата ошибки</th>
-                    <th scope="col">Дни</th>
-                    <th scope="col">Тип</th>
-                    <th scope="col">Здание</th>
-                    <th scope="col">Действия</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for electrolyzer in electrolyzers %}
-                    <tr>
-                        <td>{{ electrolyzer.number }}</td>
-                        <td>{{ electrolyzer.launch_date }}</td>
-                        <td>{{ electrolyzer.failure_date }}</td>
-                        <td>{{ electrolyzer.days_up }}</td>
-                        <td>{{ electrolyzer.electrolyzer_type.name }}</td>
-                        <td>{{ electrolyzer.building.name }}</td>
-                        <td>
-                            <a href="{% url 'edit_electrolyzer' electrolyzer.id %}">
-                                <button type="button" class="btn btn-outline-dark btn-sm"
-                                        data-mdb-ripple-color="dark">
-                                    Изменить
-                                </button>
-                            </a>
-                        </td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
+     <div class="d-flex justify-content-center">
+        <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#loginModal">
+            Войти 🎉
+        </button>
     </div>
-    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-    <script type="text/javascript"
-            src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
-    <script type="text/javascript">
-    $(document).ready(function () {
-        $('#datatable').DataTable({
-            "pagingType": "simple_numbers",
-            "searching": true,
-            "info": true,
-            "lengthChange": true,
-            "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
-            "responsive": true
-        });
-        $('.dataTables_length').addClass('bs-select');
-    });
-</script>
+    </div>
 {% endblock %}

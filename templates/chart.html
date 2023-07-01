@@ -2,7 +2,7 @@
 {% load widget_tweaks %}
 {% block title %}График{% endblock %}
 {% block content %}
-    <h1>Диаграмма сроков службы</h1>
+    <h1 class="text-center mb-5">Диаграмма сроков службы</h1>
     <form method="post" id="chart-form" class="row">
         <div class="form-group col-md-3 mb-3">
             <label for="factory" class="form-label">Завод:</label>
@@ -34,7 +34,7 @@
             <label for="forecast-date" class="form-label">Дата прогноза:</label>
             <input type="date" id="forecast-date" class="form-control">
         </div>
-        <div class="col-12">
+        <div class="col-12 mb-5">
             <input type="submit" class="btn btn-primary" value="Обновить">
         </div>
     </form>

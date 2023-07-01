@@ -4,7 +4,7 @@ from electrolyzer.models import PartType, Part, Factory, Building, Electrolyzer
 
 
 class UploadFileForm(forms.Form):
-    file = forms.FileField(label='Выберите .csv или .xlsx файл')
+    file = forms.FileField(label='Выберите csv, xlsx или json файл')
     part_type = forms.ModelChoiceField(queryset=PartType.objects.all(),
                                        label='Выберите тип электролизёра', empty_label='(Пусто)')
     building = forms.ModelChoiceField(queryset=Building.objects.all(), label='Выберите здание', empty_label='(Пусто)')

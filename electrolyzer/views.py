@@ -52,10 +52,15 @@ def upload_file(request):
                 building = form.cleaned_data['building']
 
                 important_cols = ['№', 'Дата запуска', 'Дата поломки']
+
                 if file_extension == 'csv':
                     data = pd.read_csv(file, usecols=important_cols)
                 elif file_extension in ['xls', 'xlsx']:
                     data = pd.read_excel(file, usecols=important_cols)
+                elif file_extension == 'json':
+                    data = pd.read_json(file)
+                    if not set(important_cols).issubset(data.columns):
+                        raise ValueError("JSON файл не содержит необходимых столбцов")
                 else:
                     raise ValueError("Недопустимый формат файла")
 
@@ -83,6 +88,7 @@ def upload_file(request):
         form = UploadFileForm()
 
     return render(request, 'upload_file.html', {'form': form, 'message': message})
+
 
 
 def index(request):

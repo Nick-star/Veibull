@@ -206,10 +206,10 @@ def add_factory(request):
             return JsonResponse({'message': 'Фабрика добавлена'})
     return JsonResponse({'message': 'Invalid data'}, status=400)
 
-def delete_building(request):
+def delete_building(request, building_id):
     if request.method == 'POST':
-        building_id = request.POST.get('building_id')
-        Building.objects.filter(id=building_id).delete()
+        building = get_object_or_404(Building, id=building_id)
+        building.delete()
         return JsonResponse({'message': 'Здание удалено'})
     return JsonResponse({'message': 'Invalid data'}, status=400)
 
@@ -223,3 +223,35 @@ def update_building(request, pk):
         # save changes
         building.save()
         return JsonResponse({"status": "success"})
+
+
+@csrf_exempt
+def delete_factory(request):
+    if request.method == 'POST':
+        factory_id = request.POST.get('factory_id')
+        try:
+            factory = Factory.objects.get(pk=factory_id)
+            factory.delete()
+            return JsonResponse({'message': 'Factory successfully deleted.'})
+        except Factory.DoesNotExist:
+            return JsonResponse({'message': 'Factory not found.'}, status=404)
+
+
+def factory_details(request, factory_id):
+    factory = get_object_or_404(Factory, pk=factory_id)
+    return render(request, 'factory_details.html', {'factory': factory})
+
+
+def get_factory_buildings(request, factory_id):
+    buildings = Building.objects.filter(factory_id=factory_id)
+    data = [{'id': b.id, 'name': b.name} for b in buildings]
+    return JsonResponse(data, safe=False)
+
+@csrf_exempt
+def update_factory(request, factory_id):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        factory = Factory.objects.get(id=factory_id)
+        factory.name = name
+        factory.save()
+        return JsonResponse({'message': 'Завод успешно обновлен.'})

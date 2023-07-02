@@ -11914,4 +11914,9 @@ body {
   background-color: #5FD367;
 }
 
+#factories-table tbody tr td:first-child a {
+  text-decoration: none; /* Убрать подчёркивание */
+  color: inherit; /* Использовать цвет по умолчанию */
+}
+
 /*# sourceMappingURL=main.css.map */

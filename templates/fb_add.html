@@ -1,188 +1,53 @@
 {% extends 'base.html' %}
 {% load widget_tweaks %}
 {% block title %}Добавление{% endblock %}
-{% block content %}
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css"/>
-    <script type="text/javascript" src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
-    <div class="container">
-        <div id="form-messages"></div>
-        <div class="row">
-            <div class="col-md-6">
-                <form id="factory-form">
-                    <h2 class="mb-3">Добавить фабрику</h2>
-                    {% csrf_token %}
-                    <div class="form-group mb-1">
-                        {% render_field factory_form.name class="form-control" %}
-                    </div>
-                    <button type="submit" class="btn btn-primary mt-3">Добавить фабрику</button>
-                </form>
-            </div>
-            <div class="col-md-6">
-                <form id="building-form">
-                    <h2 class="mb-3">Добавить здание</h2>
-                    {% csrf_token %}
-                    <div class="form-group mb-4">
-                        {% render_field building_form.name class="form-control" %}
-                    </div>
-                    <div class="form-group">
-                        {% render_field building_form.factory class="form-control" id="factory-select" %}
-                    </div>
-                    <button type="submit" class="btn btn-primary mt-3 mb-4">Добавить</button>
-                </form>
-            </div>
-        </div>
-    </div>
 
-    <table id="buildings-table" class="table table-striped">
-        <thead>
-        <tr>
-            <th>Фабрика</th>
-            <th>Здание</th>
-            <th>Действия</th>
-        </tr>
-        </thead>
-        <tbody>
-        </tbody>
-    </table>
-
-
-    <div class="modal" tabindex="-1" role="dialog" id="editModal">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Редактирование здания</h5>
-                </div>
-                <div class="modal-body">
-                    <form id="editForm">
-                        {% csrf_token %}
-                        <!-- Fields to edit -->
-                        <div class="form-group">
-                            <label for="editBuildingName">Имя</label>
-                            <input type="text" class="form-control" id="editBuildingName">
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" id="saveChanges">Сохранить изменения</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="deleteModalLabel">Подтверждение удаления</h5>
-      </div>
-      <div class="modal-body">
-        Вы уверены, что хотите удалить эту запись?
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Отмена</button>
-        <button type="button" class="btn btn-danger" id="confirmDelete">Удалить</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-    <script>
-        $(document).ready(function () {
-            var table = $('#buildings-table').DataTable({
-                ajax: {
-                    url: '{% url "get_buildings" %}',
-                    dataSrc: ''
-                },
-                columns: [
-                    {data: 'factory.name'},
-                    {data: 'name'},
-                    {
-                        data: null,
-                        className: "center",
-                        defaultContent: '<a href="" class="edit">Редактировать</a> / <a href="" class="delete">Удалить</a>'
-                    }
-                ]
-            });
-
-
-
-            var currentBuildingId;
-
-            $('#buildings-table tbody').on('click', 'a.delete', function (e) {
-    e.preventDefault();
-
-    var data = table.row($(this).parents('tr')).data();
-    currentBuildingId = data.id;
-
-    // показываем модальное окно подтверждения удаления
-    $('#deleteModal').modal('show');
-});
-
-$('#confirmDelete').on('click', function () {
-    // тут делаем AJAX-запрос на удаление
-    $.ajax({
-        url: '{% url "delete_building" %}',
-        type: 'POST',
-        data: {
-            'building_id': currentBuildingId,
-            'csrfmiddlewaretoken': '{{ csrf_token }}'
+{% block extra_js %}
+<script>
+$(document).ready(function () {
+    var table = $('#factories-table').DataTable({
+        ajax: {
+            url: "{% url 'get_factories' %}",
+            dataSrc: ''
         },
-        success: function () {
-            // перезагружаем таблицу и закрываем модальное окно
-            table.ajax.reload();
-            $('#deleteModal').modal('hide');
-        }
+        columns: [
+            {
+                data: 'name',
+                render: function(data, type, row) {
+                    return '<a href="{% url "factory_details" 0 %}'.replace('0', row.id) + '">' + data + '</a>';
+                }
+            },
+            {
+                data: null,
+                defaultContent: '<a href="#" class="delete">Удалить</a>'
+            }
+        ]
+    });
+
+    $('#factories-table tbody').on('click', 'a.delete', function (e) {
+        e.preventDefault();
+        var data = table.row($(this).parents('tr')).data();
+$('#deleteModal').modal('show');
+
+    // On confirmation, delete the factory
+    $('#confirm-delete').on('click', function () {
+        $.ajax({
+            url: "{% url 'delete_factory' %}",
+            type: 'POST',
+            data: {
+                'factory_id': data.id,
+                'csrfmiddlewaretoken': '{{ csrf_token }}'
+            },
+            success: function () {
+                table.ajax.reload();
+                $('#deleteModal').modal('hide');
+            },
+            error: function (xhr, errmsg, err) {
+                $('#form-messages').html("<div class='alert alert-danger'>Ошибка: " + errmsg + "</div>");
+            }
+        });
     });
 });
-
-            $('#buildings-table tbody').on('click', 'a.edit', function (e) {
-                e.preventDefault();
-                var data = table.row($(this).parents('tr')).data();
-                // Заполните поля формы данными
-                $('#editBuildingName').val(data.name);
-                currentBuildingId = data.id;
-                // Показать модальное окно
-                $('#editModal').modal('show');
-            });
-
-            $('#saveChanges').on('click', function () {
-                var url = '/update_building/' + currentBuildingId + '/';
-
-                var data = {
-                    // Собираем данные из формы
-                    'name': $('#editBuildingName').val(),
-                }
-
-                $.ajaxSetup({
-                    headers: {"X-CSRFToken": '{{ csrf_token }}'}
-                });
-
-                $.ajax({
-                    url: url,
-                    type: 'POST',
-                    data: data,
-
-                    success: function (json) {
-                        // Закрываем модальное окно
-                        $('#editModal').modal('hide');
-
-                        // Обновляем таблицу
-                        table.ajax.reload();
-
-                        // Отображаем сообщение об успехе
-                        $('#form-messages').html("<div class='alert alert-success'>" + "Успешно изменено" + "</div>");
-                    },
-
-                    error: function (xhr, errmsg, err) {
-                        // Обрабатываем ошибку
-                        $('#form-messages').html("<div class='alert alert-danger'>Ошибка: " + errmsg + "</div>");
-                    }
-                });
-            });
-
-        });
-
 
         $(document).ready(function () {
             // AJAX for posting
@@ -231,5 +96,74 @@ $('#confirmDelete').on('click', function () {
                 }
             });
         }
+});
     </script>
+    {% endblock %}
+{% block extra_css %}
+    <style>
+    #factories-table tbody tr td:first-child a {
+        color: inherit; /* Использовать цвет по умолчанию */
+    }
+</style>
+{% endblock %}
+{% block content %}
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css"/>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    <div class="container">
+        <div id="form-messages"></div>
+        <div class="row">
+            <div class="col-md-6">
+                <form id="factory-form">
+                    <h2 class="mb-3">Добавить фабрику</h2>
+                    {% csrf_token %}
+                    <div class="form-group mb-1">
+                        {% render_field factory_form.name class="form-control" %}
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-3">Добавить фабрику</button>
+                </form>
+            </div>
+            <div class="col-md-6">
+                <form id="building-form">
+                    <h2 class="mb-3">Добавить здание</h2>
+                    {% csrf_token %}
+                    <div class="form-group mb-4">
+                        {% render_field building_form.name class="form-control" %}
+                    </div>
+                    <div class="form-group">
+                        {% render_field building_form.factory class="form-control" id="factory-select" %}
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-3 mb-4">Добавить</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <table id="factories-table" class="table table-striped">
+    <thead>
+    <tr>
+        <th>Имя</th>
+        <th>Действия</th>
+    </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+
+    <!-- Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteModalLabel">Удаление завода</h5>
+      </div>
+      <div class="modal-body">
+        Вы уверены, что хотите удалить этот завод?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+        <button type="button" class="btn btn-primary" id="confirm-delete">Удалить</button>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

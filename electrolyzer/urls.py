@@ -18,6 +18,10 @@ urlpatterns = [
     path('get_buildings/', views.get_buildings, name='get_buildings'),
     path('get_part_types/', views.get_part_types, name='get_part_types'),
     path('get_oldest_date', views.get_oldest_date, name='get_oldest_date'),
-    path('delete_building/', views.delete_building, name='delete_building'),
-    path('update_building/<int:pk>/', views.update_building, name='update_building')
+    path('delete_building/<int:building_id>/', views.delete_building, name='delete_building'),
+    path('update_building/<int:pk>/', views.update_building, name='update_building'),
+    path('update_factory/<int:factory_id>/', views.update_factory, name='update_factory'),
+    path('delete_factory/', views.delete_factory, name='delete_factory'),
+    path('factory/<int:factory_id>/', views.factory_details, name='factory_details'),
+    path('get_factory_buildings/<int:factory_id>/', views.get_factory_buildings, name='get_factory_buildings'),
 ]

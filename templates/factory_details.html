@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% block title %}{{ factory.name }}{% endblock %}
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+    var factoryId = '{{ factory.id }}';
+    var table = $('#buildings-table').DataTable({
+        ajax: {
+            url: "{% url 'get_factory_buildings' factory.id %}",
+            dataSrc: ''
+        },
+        columns: [
+            { data: 'name',
+            render: function(data, type, row) {
+                return '<a href="/building/' + row.id + '">' + data + '</a>';
+            }
+            },
+            {
+                data: null,
+                defaultContent: '<a href="#" class="delete">Удалить</a>'
+            }
+        ]
+    });
+
+    $('#factory-edit-form').on('submit', function(event) {
+        event.preventDefault();
+
+        $.ajax({
+            url: "{% url 'update_factory' factory.id %}",
+            type: 'POST',
+            data: {
+                'name': $('#factoryName').val(),
+                'csrfmiddlewaretoken': '{{ csrf_token }}'
+            },
+            success: function(json) {
+                $('h2').text($('#factoryName').val());
+            },
+            error: function(xhr, errmsg, err) {
+                alert('Произошла ошибка при обновлении');
+            }
+        });
+    });
+
+
+     $('#buildings-table tbody').on('click', 'a.delete', function(e) {
+        e.preventDefault();
+
+        // Here you can show your modal window
+        $('#confirmDeleteModal').modal('show');
+
+        // Handle the delete event
+        var data = table.row($(this).parents('tr')).data();
+        $('#confirmDeleteButton').data('building-id', data.id);  // store the building id to the confirm button
+    });
+
+    $('#confirmDeleteButton').on('click', function() {
+        var buildingId = $(this).data('building-id');
+        $.ajax({
+            url: "/delete_building/" + buildingId + '/',  // replace with your actual URL
+            type: 'POST',
+            data: {
+                'csrfmiddlewaretoken': '{{ csrf_token }}'
+            },
+            success: function () {
+                $('#confirmDeleteModal').modal('hide');
+                table.ajax.reload();
+            },
+            error: function (xhr, errmsg, err) {
+                alert('Произошла ошибка при удалении');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
+{% block extra_css %}
+    <style>
+    #buildings-table tbody tr td:first-child a {
+        color: inherit; /* Использовать цвет по умолчанию */
+    }
+</style>
+{% endblock %}
+{% block content %}
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css"/>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    <h2>{{ factory.name }}</h2>
+
+<form id="factory-edit-form" method="POST">
+    {% csrf_token %}
+    <div class="form-group">
+        <label for="factoryName">Имя:</label>
+        <input type="text" class="form-control" id="factoryName" value="{{ factory.name }}">
+    </div>
+    <button type="submit" class="btn btn-primary mt-3 mb-3">Обновить</button>
+</form>
+
+<h3>Список строений:</h3>
+<table id="buildings-table" class="table table-striped">
+    <thead>
+        <tr>
+            <th>Имя</th>
+            <th>Действия</th>
+        </tr>
+    </thead>
+</table>
+
+    <!-- Confirm Delete Modal -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" role="dialog" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmDeleteModalLabel">Подтвердите удаление</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        Вы уверены, что хотите удалить это строение?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+        <button type="button" id="confirmDeleteButton" class="btn btn-danger">Удалить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

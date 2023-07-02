@@ -33,15 +33,15 @@
                         <div class="card-body">
                             <h5 class="card-title mb-3">Действия пользователей с повышенным уровнем доступа</h5>
                             <p class="card-text">
-                                <a href="{% url 'tb_add' %}" class="custom-link">
-                                    <i class="fas fa-plus me-2" aria-hidden="true"></i>
-                                    Добавить тип электролизёра и завод
+                                <a href="{% url 'fb_add' %}" class="custom-link">
+                                    <i class="fa-solid fa-building me-2" aria-hidden="true"></i>
+                                    Управление заводами и строениями
                                 </a>
                             </p>
                             <p class="card-text">
                                 <a href="{% url 'upload_file' %}" class="custom-link">
                                     <i class="fa fa-upload me-2" aria-hidden="true"></i>
-                                    Загрузить файл
+                                    Загрузить данные
                                 </a>
                             </p>
                         </div>
@@ -63,6 +63,12 @@
                                 <a href="{% url 'change_password' %}" class="custom-link">
                                     <i class="fa fa-lock me-2" aria-hidden="true"></i>
                                     Сменить пароль
+                                </a>
+                            </p>
+                            <p class="card-text">
+                                <a href="{% url 'manage_users' %}" class="custom-link">
+                                    <i class="fa-solid fa-user-xmark me-2" aria-hidden="true"></i>
+                                    Удалить пользователя
                                 </a>
                             </p>
                         </div>

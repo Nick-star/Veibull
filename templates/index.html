@@ -6,10 +6,12 @@
     <div class="container">
         <h1 id="fade-in-text" class="display-1 text-center mb-4">РУСАЛ</h1>
         <h1 id="electrolyzer-title" class="text-center mb-4">Электролизёры</h1>
-     <div class="d-flex justify-content-center">
-        <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#loginModal">
-            Войти 🎉
-        </button>
-    </div>
+        {% if not user.is_authenticated %}
+            <div class="d-flex justify-content-center">
+                <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#loginModal">
+                    Войти 🎉
+                </button>
+            </div>
+        {% endif %}
     </div>
 {% endblock %}

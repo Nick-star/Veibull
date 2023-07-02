@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Удалить пользователя{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-6">
+            <form class="form-inline mt-2 mt-md-0">
+                <label class="mr-2" for="user-select">Выберите пользователя:</label>
+                <select class="form-control" id="user-select">
+                    {% for user in users %}
+                        <option value="{{ user.id }}">{{ user.username }}</option>
+                    {% endfor %}
+                </select>
+                <button id="delete-user" class="btn btn-danger ml-3 mt-3">Удалить выбранного пользователя</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Место для отображения сообщений -->
+    <div id="form-messages" class="mt-4"></div>
+</div>
+<script>
+    $(document).ready(function () {
+        $('#delete-user').click(function () {
+            var userId = $('#user-select').val();
+
+            $.ajax({
+                url: "{% url 'delete_user' %}",
+                type: "POST",
+                data: {
+                    'user_id': userId,
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function (json) {
+                    $('#form-messages').html("<div class='alert alert-success'>" + json.message + "</div>");
+                    location.reload();  // reload the page to update the dropdown list
+                },
+                error: function (xhr, errmsg, err) {
+                    $('#form-messages').html("<div class='alert alert-danger'>Ошибка: " + errmsg + "</div>");
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

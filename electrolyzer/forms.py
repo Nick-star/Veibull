@@ -22,12 +22,17 @@ class ElectrolyzerForm(forms.ModelForm):
 
 
 class BuildingForm(forms.ModelForm):
-    class Meta:
-        # TODO
+    factory = forms.ModelChoiceField(
+        queryset=Factory.objects.all(),
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
 
-        model = Factory
-        fields = ['name']
-        # fields = ['']
+    class Meta:
+        model = Building
+        fields = ['name', 'factory']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+        }
 
 
 class ElectrolyzerTypeForm(forms.ModelForm):
@@ -35,4 +40,9 @@ class ElectrolyzerTypeForm(forms.ModelForm):
         # TODO
 
         model = PartType
+        fields = ['name']
+
+class FactoryForm(forms.ModelForm):
+    class Meta:
+        model = Factory
         fields = ['name']

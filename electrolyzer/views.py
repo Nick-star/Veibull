@@ -7,8 +7,10 @@ from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from reliability.Fitters import Fit_Weibull_2P
+from django.core.exceptions import ObjectDoesNotExist
+from django.views.decorators.csrf import csrf_exempt
 
-from .forms import UploadFileForm, BuildingForm, ElectrolyzerTypeForm, ElectrolyzerForm
+from .forms import UploadFileForm, BuildingForm, ElectrolyzerTypeForm, ElectrolyzerForm, FactoryForm
 from .models import Electrolyzer, PartType, Building, Part, Factory
 from .utils import censor_dates, optimize_curve, weibull_cdf, empirical_cdf
 
@@ -106,10 +108,10 @@ def get_factories(request):
 
 
 def get_buildings(request):
-    factory_id = request.GET.get('factory_id')
-    buildings = Factory.objects.get(id=factory_id).building_set.all()
-    data = [{'id': b.id, 'name': b.name} for b in buildings]
+    buildings = Building.objects.all().select_related('factory')
+    data = [{'id': b.id, 'name': b.name, 'factory': {'name': b.factory.name}} for b in buildings]
     return JsonResponse(data, safe=False)
+
 
 
 def get_part_types(request):
@@ -172,11 +174,11 @@ def get_electrolyzer_data(request):
 
 
 @login_required
-def tb_add(request):
+def fb_add(request):
     building_form = BuildingForm()
-    electrolyzer_type_form = ElectrolyzerTypeForm()
-    return render(request, 'tb_add.html',
-                  {'building_form': building_form, 'electrolyzer_type_form': electrolyzer_type_form})
+    factory_form = FactoryForm()
+    return render(request, 'fb_add.html',
+                  {'building_form': building_form, 'factory_form': factory_form})
 
 
 def add_building(request):
@@ -195,3 +197,29 @@ def add_electrolyzer_type(request):
             form.save()
             return JsonResponse({'message': 'Тип добавлен'})
     return JsonResponse({'message': 'Invalid data'}, status=400)
+
+def add_factory(request):
+    if request.method == 'POST':
+        form = FactoryForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return JsonResponse({'message': 'Фабрика добавлена'})
+    return JsonResponse({'message': 'Invalid data'}, status=400)
+
+def delete_building(request):
+    if request.method == 'POST':
+        building_id = request.POST.get('building_id')
+        Building.objects.filter(id=building_id).delete()
+        return JsonResponse({'message': 'Здание удалено'})
+    return JsonResponse({'message': 'Invalid data'}, status=400)
+
+@csrf_exempt
+def update_building(request, pk):
+    if request.method == "POST":
+        # get building instance
+        building = get_object_or_404(Building, pk=pk)
+        # update building details
+        building.name = request.POST.get('name')
+        # save changes
+        building.save()
+        return JsonResponse({"status": "success"})

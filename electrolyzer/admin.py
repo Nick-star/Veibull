@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import PartType, Part, History, Factory, Building, Electrolyzer
+from .models import PartType, Part, History, Factory, Building
 
 
 class HistoryInline(admin.TabularInline):
@@ -9,6 +9,8 @@ class HistoryInline(admin.TabularInline):
 
 
 class PartAdmin(admin.ModelAdmin):
+    list_display = ('number', 'part_type', 'building')
+    search_fields = ['number', 'part_type__id', 'building__id']
     readonly_fields = ('avg_days',)
     inlines = [HistoryInline]
 
@@ -19,10 +21,10 @@ class BuildingInline(admin.TabularInline):
 
 
 class FactoryAdmin(admin.ModelAdmin):
+    search_fields = ['name']
     inlines = [BuildingInline]
 
 
 admin.site.register(PartType)
 admin.site.register(Part, PartAdmin)
 admin.site.register(Factory, FactoryAdmin)
-admin.site.register(Electrolyzer)

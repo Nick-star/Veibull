@@ -1,18 +1,22 @@
+import base64
+import io
 import math
 
 import numpy as np
 import pandas as pd
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
-from django.http import JsonResponse
+from django.db.models import Q, Min
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
+from openpyxl.workbook import Workbook
 from reliability.Fitters import Fit_Weibull_2P
 from django.core.exceptions import ObjectDoesNotExist
 from django.views.decorators.csrf import csrf_exempt
 
 from .forms import UploadFileForm, BuildingForm, ElectrolyzerTypeForm, ElectrolyzerForm, FactoryForm
-from .models import Electrolyzer, PartType, Building, Part, Factory
-from .utils import censor_dates, optimize_curve, weibull_cdf, empirical_cdf
+from .models import Electrolyzer, PartType, Building, Part, Factory, History
+from .utils import weibull_cdf, censor_dates, empirical_cdf, optimize_curve, DAYS_TO_MONTHS
 
 
 @login_required
@@ -119,55 +123,86 @@ def get_part_types(request):
 
 
 def get_oldest_date(request):
-    # TODO replace with actual
-    return JsonResponse({"date": "2010-01-01"})
+    launch_date = History.objects.values_list('launch_date').aggregate(Min('launch_date'))['launch_date__min']
+    return JsonResponse({"date": str(launch_date)})
 
 
-def get_electrolyzer_data(request):
-    start_date = request.GET.get('start_date')
-    end_date = request.GET.get('end_date')
-    forecast_date = request.GET.get('forecast_date')
-    part_type = request.GET.get('part_type')
-    building = request.GET.get('building')
+# TODO find a way around this csrf shit
+@csrf_exempt
+def get_chart(request):
+    start_date = request.POST.get('start_date')
+    end_date = request.POST.get('end_date')
+    forecast_date = request.POST.get('forecast_date')
+    part_types = request.POST.getlist('part_type')
+    building = request.POST.get('building')
 
-    values = Part.objects.filter(
-        Q(part_type_id=part_type, building_id=building, history__launch_date__range=[start_date, end_date]) & (
+    queue = Part.objects.filter(
+        Q(building_id=building, history__launch_date__range=[start_date, end_date]) & (
                 Q(history__failure_date__isnull=True) |
-                Q(history__failure_date__range=[start_date, end_date]))).distinct().values("history__launch_date",
-                                                                                           "avg_days")
+                Q(history__failure_date__range=[start_date, end_date])))
 
-    df = pd.DataFrame.from_records(values)
-    df.columns = ['launch_date', 'days']
-    df = censor_dates(df, end_date, failure_column='days')
-
-    fit = Fit_Weibull_2P(failures=np.array(df[df['days'].notnull()]['days']),
-                         # right_censored=np.array(df[df['running_days'].notnull()]['running_days']),
-                         print_results=False,
-                         show_probability_plot=False)
-
-    days = (pd.to_datetime(forecast_date) - pd.to_datetime(end_date)).days
-    weibull_curve = weibull_cdf(fit.beta, fit.alpha)
-    weibull_curve = optimize_curve(weibull_curve, 0.01)
-
-    empirical_curve = empirical_cdf(np.array(df['days'].dropna()), np.array(df['running_days'].dropna()))
-    empirical_curve = optimize_curve(empirical_curve, 0.01)
-
-    count = len(df[df['days'].isnull()].index)
-    failed_percent = 1 - math.exp(-math.pow(days / fit.alpha, fit.beta))
     response = {
-        'weibull': {
-            'x': list(weibull_curve[:, 0] / 30.4167),
-            'y': list(weibull_curve[:, 1] * 100)
-        },
-        'empirical': {
-            'x': list(empirical_curve[:, 0] / 30.4167),
-            'y': list(empirical_curve[:, 1] * 100)
-        },
-        'type': str(PartType.objects.get(id=part_type)),
-        'working_count': count,
-        'failed_count': f'{count * failed_percent:.2f}',
+        'start_date': start_date,
+        'end_date': end_date,
+        'forecast_date': forecast_date,
+        'results': []
     }
 
+    result_data = pd.DataFrame(columns=['Завод', 'Корпус', 'Тип', 'Действующих, шт', 'Отключений, шт'])
+    for part_type in part_types:
+        values = queue.filter(part_type_id=part_type).values("history__launch_date", "avg_days")
+        df = pd.DataFrame.from_records(values)
+        df.columns = ['launch_date', 'days']
+        df = censor_dates(df, end_date, failure_column='days')
+
+        fit = Fit_Weibull_2P(failures=np.array(df[df['days'].notnull()]['days']),
+                             # right_censored=np.array(df[df['running_days'].notnull()]['running_days']),
+                             print_results=False,
+                             show_probability_plot=False)
+
+        days = (pd.to_datetime(forecast_date) - pd.to_datetime(end_date)).days
+        weibull_curve = weibull_cdf(fit.beta, fit.alpha)
+        weibull_curve = optimize_curve(weibull_curve, 0.01)
+
+        empirical_curve = empirical_cdf(np.array(df['days'].dropna()))
+        empirical_curve = optimize_curve(empirical_curve, 0.01)
+
+        all_count = len(df[df['days'].notnull()].index)
+        working_count = len(df[df['days'].isnull()].index)
+        failed_percent = 1 - math.exp(-math.pow(days / fit.alpha, fit.beta))
+        building_model = Building.objects.get(id=building)
+        response['results'].append({
+            'weibull_x': list(weibull_curve[:, 0] / DAYS_TO_MONTHS),
+            'weibull_y': list(weibull_curve[:, 1] * 100),
+            'empirical_x': list(empirical_curve[:, 0] / DAYS_TO_MONTHS),
+            'empirical_y': list(empirical_curve[:, 1] * 100),
+            'factory': building_model.factory.name,
+            'building': building_model.name,
+            'type': PartType.objects.get(id=part_type).name,
+            'all_count': all_count,
+            'working_count': working_count,
+            'failed_count': f'{working_count * failed_percent:.2f}',
+        })
+        result_data.loc[len(result_data.index)] = [building_model.factory.name, building_model.name,
+                                                   PartType.objects.get(id=part_type).name, working_count,
+                                                   f'{working_count * failed_percent:.2f}']
+
+    workbook = Workbook()
+    sheet = workbook.active
+
+    sheet.append(result_data.columns.tolist())  # Write column headers
+    for row in result_data.values.tolist():
+        sheet.append(row)
+
+    sheet.column_dimensions['D'].width = 30
+    sheet.column_dimensions['E'].width = 30
+
+    buffer = io.BytesIO()
+
+    workbook.save(buffer)
+    buffer.seek(0)
+    file_content = base64.b64encode(buffer.getvalue()).decode('utf-8')
+    response['excel_file'] = file_content
     return JsonResponse(response, safe=False)
 
 
@@ -301,6 +336,7 @@ def pt_list(request):
         part_types = PartType.objects.all()
         return render(request, 'pt_list.html', {'part_types': part_types})
 
+
 @csrf_exempt
 def add_part_type(request):
     if request.method == 'POST':
@@ -308,11 +344,13 @@ def add_part_type(request):
         PartType.objects.create(name=name)
         return JsonResponse({'message': 'Тип успешно добавлен.'})
 
+
 @csrf_exempt
 def delete_part_type(request, part_type_id):
     if request.method == 'POST':
         PartType.objects.filter(id=part_type_id).delete()
         return JsonResponse({'message': 'Тип электролизёра удален'})
+
 
 @csrf_exempt
 def update_part_type(request, part_type_id):
@@ -323,9 +361,11 @@ def update_part_type(request, part_type_id):
         part_type.save()
         return JsonResponse({'message': 'Тип электролизёра успешно обновлен.'})
 
+
 def part_type_details(request, part_type_id):
     part_type = get_object_or_404(PartType, id=part_type_id)
     return render(request, 'part_type_details.html', {'part_type': part_type})
+
 
 def get_part_type_electrolyzers(request, part_type_id):
     electrolyzers = Electrolyzer.objects.filter(electrolyzer_type_id=part_type_id)

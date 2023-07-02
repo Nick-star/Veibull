@@ -37,10 +37,9 @@ class BuildingForm(forms.ModelForm):
 
 class ElectrolyzerTypeForm(forms.ModelForm):
     class Meta:
-        # TODO
-
         model = PartType
         fields = ['name']
+
 
 class FactoryForm(forms.ModelForm):
     class Meta:

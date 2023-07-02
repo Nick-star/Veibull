@@ -1,6 +1,9 @@
 {% extends 'base.html' %}
 {% load widget_tweaks %}
 {% block title %}График{% endblock %}
+{% block extra_js %}
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+{% endblock %}
 {% block content %}
     <h1 class="text-center mb-5">Диаграмма сроков службы</h1>
     <form method="post" id="chart-form" class="row">
@@ -18,7 +21,7 @@
         </div>
         <div class="form-group col-md-3 mb-3">
             <label for="part-type" class="form-label">Тип:</label>
-            <select id="part-type" class="form-control form-select">
+            <select id="part-type" multiple size="2" class="form-control form-select">
                 <option disabled selected value>(Пусто)</option>
             </select>
         </div>
@@ -34,37 +37,27 @@
             <label for="forecast-date" class="form-label">Дата прогноза:</label>
             <input type="date" id="forecast-date" class="form-control">
         </div>
-        <div class="col-12 mb-5">
+        <div class="col-12 mb-3">
             <input type="submit" class="btn btn-primary" value="Обновить">
         </div>
     </form>
     <div id="chart"></div>
 
-    <div class="table-responsive">
-        <table id="tableforecast" class="table table-striped table-bordered">
-            <thead>
-            <tr>
-                <th scope="col">Корпус</th>
-                <th scope="col">Тип</th>
-                <th scope="col">Даты</th>
-                <th scope="col">Действующих, шт</th>
-                <th scope="col">Дата прогноза</th>
-                <th scope="col">Отключений, шт</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr>
-                <td id="building1"></td>
-                <td id="type"></td>
-                <td id="dates-range"></td>
-                <td id="working-count"></td>
-                <td id="est-date"></td>
-                <td id="failed-count"></td>
-            </tr>
-        </table>
-    </div>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <table id="tableforecast" class="table table-striped table-bordered" hidden>
+        <thead>
+        <tr>
+            <th scope="col">Завод</th>
+            <th scope="col">Корпус</th>
+            <th scope="col">Тип</th>
+            {#                <th scope="col">Даты</th>#}
+            <th scope="col">Действующих, шт</th>
+            {#                <th scope="col">Дата прогноза</th>#}
+            <th scope="col">Отключений, шт</th>
+        </tr>
+        </thead>
+        <tbody>
+    </table>
+    <div id="download_button"></div>
     <script>
         $(document).ready(function () {
             // TODO delete this
@@ -82,6 +75,7 @@
         let start_date = chart_form.find('#start-date');
         let end_date = chart_form.find('#end-date');
         let forecast_date = chart_form.find('#forecast-date');
+        let table = $('#tableforecast');
         building.prop('disabled', true);
 
         $.getJSON("{% url 'get_factories' %}", function (response) {
@@ -142,26 +136,7 @@
 
         chart_form.on('submit', function (e) {
             e.preventDefault();
-
-            let form = $(this);
-            let isValid = true;
-
-            form.find('.form-control').each(function () {
-                let value = $(this).val()
-                if (value === null) {
-                    isValid = false;
-                    $(this).addClass('is-invalid');
-                } else if (value.trim() === '') {
-                    isValid = false;
-                    $(this).addClass('is-invalid');
-                } else {
-                    $(this).removeClass('is-invalid');
-                }
-            });
-
-            if (isValid) {
-                update_chart();
-            }
+            update_chart();
         });
 
 
@@ -172,50 +147,85 @@
             let part_type_val = part_type.val();
             let building_val = building.val();
 
-            if (new Date(end_date_val) <= new Date(start_date_val) || new Date(forecast_date_val) <= new Date(end_date_val)) {
-                alert('Неверные даты. Убедитесь, что Дата окончания > Дата начала и Дата прогноза > Дата окончания.');
-                return;
-            }
 
-            $.getJSON("{% url 'get_electrolyzer_data' %}", {
-                start_date: start_date_val,
-                end_date: end_date_val,
-                forecast_date: forecast_date_val,
-                part_type: part_type_val,
-                building: building_val,
-            }, function (response) {
-                let trace1 = {
-                    x: response.weibull.x,
-                    y: response.weibull.y,
-                    mode: 'lines',
-                    name: response.type,
-                    line: {
-                        shape: 'spline'
+            $.ajax({
+                url: "{% url 'get_chart' %}",
+                method: 'POST',
+                dataType: "json",
+                traditional: true,
+                data: {
+                    start_date: start_date_val,
+                    end_date: end_date_val,
+                    forecast_date: forecast_date_val,
+                    part_type: part_type_val,
+                    building: building_val,
+                },
+                success: function (result) {
+                    let data = [];
+                    result.results.forEach(function (value) {
+                        data.push({
+                            x: value.weibull_x,
+                            y: value.weibull_y,
+                            mode: 'lines',
+                            name: value.type,
+                            line: {
+                                shape: 'spline'
+                            }
+                        });
+
+                        data.push({
+                            x: value.empirical_x,
+                            y: value.empirical_y,
+                            mode: 'lines',
+                            name: value.type + " теор.",
+                            line: {
+                                shape: 'spline'
+                            }
+                        });
+
+                        let newRow = $('<tr>');
+
+                        let factory = $('<td>').text(value.factory);
+                        let building = $('<td>').text(value.building);
+                        let type = $('<td>').text(value.type);
+                        let working_count = $('<td>').text(value.working_count);
+                        let failed_count = $('<td>').text(value.failed_count);
+
+                        newRow.append(factory, building, type, working_count, failed_count);
+                        table.prop('hidden', false);
+                        table.append(newRow);
+                    });
+
+                    let layout = {
+                        xaxis: {
+                            title: 'Накопленный (средний) срок службы, мес',
+                            automargin: true,
+                        },
+                        yaxis: {title: 'Кол-во отключенных, %'},
+                        autosize: true,
+                        colorway: ['#58bc82', '#8fe388', '#4A55A2', '#7895CB'],
+                        legend: {"orientation": "h", y: -0.25}
+                    };
+
+                    Plotly.newPlot('chart', data, layout);
+
+                    let base64Data = result.excel_file;
+                    let binaryData = atob(base64Data);
+                    let arrayBuffer = new ArrayBuffer(binaryData.length);
+                    let uint8Array = new Uint8Array(arrayBuffer);
+                    for (let i = 0; i < binaryData.length; i++) {
+                        uint8Array[i] = binaryData.charCodeAt(i);
                     }
-                };
 
-                let trace2 = {
-                    x: response.empirical.x,
-                    y: response.empirical.y,
-                    mode: 'lines',
-                    name: response.type + " теор.",
-                    line: {
-                        shape: 'spline'
-                    }
-                };
+                    let blob = new Blob([uint8Array], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
 
-                let data = [trace1, trace2];
-
-                let layout = {
-                    xaxis: {title: 'Накопленный (средний) срок службы, мес'},
-                    yaxis: {title: 'Кол-во отключенных, %'},
-                    autosize: true,
-                    legend: {"orientation": "h"}
-                };
-
-                Plotly.newPlot('chart', data, layout);
-            }).fail(function () {
-                alert("Нет данных в выбранном диапазоне дат. Пожалуйста, выберите другой диапазон.");
+                    let link = document.createElement('a');
+                    link.innerText = 'Скачать отчет';
+                    link.classList.add('my-3', 'btn', 'btn-primary');
+                    link.href = window.URL.createObjectURL(blob);
+                    link.download = 'table_data.xlsx';
+                    $('#download_button').html(link);
+                }
             });
         }
 

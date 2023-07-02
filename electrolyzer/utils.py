@@ -8,8 +8,6 @@ import pandas as pd
 DAYS_TO_MONTHS = 30.4167
 
 
-# TODO Write type annotations.
-
 def days_to_months(days: int):
     return days / DAYS_TO_MONTHS
 
@@ -50,8 +48,6 @@ def calculate_days(data: pd.DataFrame, start_date, end_date,
     data.loc[~data[failure_column].notnull(), failed_time_column] = (
             data[failure_column] - data[launch_column]).dt.days
     data = censor_dates(data, censor_date, launch_column, running_time_column, failure_column)
-    # data.loc[failure_column_null, running_time_column] = (
-    #         censor_date - pd.to_datetime(data[launch_column])).dt.days
 
     return data
 
@@ -67,34 +63,16 @@ def censor_dates(data: pd.DataFrame, censor_date, launch_column: str = 'launch_d
     return data
 
 
-def empirical_cdf(x: np.ndarray, censored: np.ndarray, length: int = None, sort: bool = True) -> np.ndarray:
-    """
-    :param censored:
-    :param x:
-    :param length:
-    :param sort: True если массив не отсортирован.
-    :return:
-    """
-    # data_length = len(x) + len(censored)
+def empirical_cdf(x: np.ndarray, length: int = None, sort: bool = True) -> np.ndarray:
     if length is None:
         length = len(x)
 
     if sort:
         x.sort()
-    # x_list = list(x)
-    # x_censored_list = list(censored)
-    # x_list.sort()
-    # x_censored_list.sort()
-    # print(length)
     y = np.empty(length, dtype=float)
     for i in range(length):
         y[i] = (i + 1) / length
-    curr_index = 0
-    # for i in range(1, length + 1):
-    #     y[curr_index] = (i - 0.3) / (data_length + 0.4)
-    #     curr_index += 1
 
-    # iterable = ((i / length) for i in range(1, data_length + 1))
     return np.column_stack((x, y))
 
 

@@ -92,7 +92,6 @@ def upload_file(request):
     return render(request, 'upload_file.html', {'form': form, 'message': message})
 
 
-
 def index(request):
     return render(request, 'index.html')
 
@@ -111,7 +110,6 @@ def get_buildings(request):
     buildings = Building.objects.all().select_related('factory')
     data = [{'id': b.id, 'name': b.name, 'factory': {'name': b.factory.name}} for b in buildings]
     return JsonResponse(data, safe=False)
-
 
 
 def get_part_types(request):
@@ -198,6 +196,7 @@ def add_electrolyzer_type(request):
             return JsonResponse({'message': 'Тип добавлен'})
     return JsonResponse({'message': 'Invalid data'}, status=400)
 
+
 def add_factory(request):
     if request.method == 'POST':
         form = FactoryForm(request.POST)
@@ -206,12 +205,14 @@ def add_factory(request):
             return JsonResponse({'message': 'Фабрика добавлена'})
     return JsonResponse({'message': 'Invalid data'}, status=400)
 
+
 def delete_building(request, building_id):
     if request.method == 'POST':
         building = get_object_or_404(Building, id=building_id)
         building.delete()
         return JsonResponse({'message': 'Здание удалено'})
     return JsonResponse({'message': 'Invalid data'}, status=400)
+
 
 @csrf_exempt
 def update_building(request, pk):
@@ -247,6 +248,7 @@ def get_factory_buildings(request, factory_id):
     data = [{'id': b.id, 'name': b.name} for b in buildings]
     return JsonResponse(data, safe=False)
 
+
 @csrf_exempt
 def update_factory(request, factory_id):
     if request.method == 'POST':
@@ -256,9 +258,11 @@ def update_factory(request, factory_id):
         factory.save()
         return JsonResponse({'message': 'Завод успешно обновлен.'})
 
+
 def building_detail(request, pk):
     building = get_object_or_404(Building, pk=pk)
     return render(request, 'building_details.html', {'building': building})
+
 
 @csrf_exempt
 def update_building(request, building_id):
@@ -268,6 +272,7 @@ def update_building(request, building_id):
         building.name = name
         building.save()
         return JsonResponse({'message': 'Здание успешно обновлено.'})
+
 
 def get_building_electrolyzers(request, building_id):
     electrolyzers = Electrolyzer.objects.filter(building_id=building_id)
@@ -281,6 +286,7 @@ def get_building_electrolyzers(request, building_id):
     } for e in electrolyzers]
     return JsonResponse(data, safe=False)
 
+
 @csrf_exempt
 def delete_electrolyzer(request, electrolyzer_id):
     if request.method == 'POST':
@@ -288,3 +294,46 @@ def delete_electrolyzer(request, electrolyzer_id):
         return JsonResponse({'message': 'Электролизер успешно удален.'})
     else:
         return JsonResponse({'message': 'Неверный запрос'}, status=400)
+
+
+def pt_list(request):
+    if request.method == 'GET':
+        part_types = PartType.objects.all()
+        return render(request, 'pt_list.html', {'part_types': part_types})
+
+@csrf_exempt
+def add_part_type(request):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        PartType.objects.create(name=name)
+        return JsonResponse({'message': 'Тип успешно добавлен.'})
+
+@csrf_exempt
+def delete_part_type(request, part_type_id):
+    if request.method == 'POST':
+        PartType.objects.filter(id=part_type_id).delete()
+        return JsonResponse({'message': 'Тип электролизёра удален'})
+
+@csrf_exempt
+def update_part_type(request, part_type_id):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        part_type = PartType.objects.get(id=part_type_id)
+        part_type.name = name
+        part_type.save()
+        return JsonResponse({'message': 'Тип электролизёра успешно обновлен.'})
+
+def part_type_details(request, part_type_id):
+    part_type = get_object_or_404(PartType, id=part_type_id)
+    return render(request, 'part_type_details.html', {'part_type': part_type})
+
+def get_part_type_electrolyzers(request, part_type_id):
+    electrolyzers = Electrolyzer.objects.filter(electrolyzer_type_id=part_type_id)
+    data = [{
+        'id': e.id,
+        'number': e.number,
+        'launch_date': e.launch_date,
+        'failure_date': e.failure_date,
+        'days_up': e.days_up,
+    } for e in electrolyzers]
+    return JsonResponse(data, safe=False)

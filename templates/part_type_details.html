@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% block title %}{{ part_type.name }}{% endblock %}
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+    var partTypeId = '{{ part_type.id }}'; // get part type id from template context
+    var table = $('#electrolyzers-table').DataTable({
+        ajax: {
+            url: "/get_part_type_electrolyzers/" + partTypeId + "/",  // change to your actual URL
+            dataSrc: ''
+        },
+        columns: [
+            {
+                data: 'number',
+                render: function (data, type, row) {
+                    return '<a href="/edit-electrolyzer/' + row.id + '">' + data + '</a>';
+                }
+            },
+            { data: 'launch_date' },
+            { data: 'failure_date' },
+            { data: 'days_up' },
+            {
+                data: null,
+                defaultContent: '<a href="#" class="delete">Удалить</a>'
+            }
+        ]
+    });
+
+    $('#part-type-edit-form').on('submit', function(event) {
+        event.preventDefault();
+
+        $.ajax({
+            url: "{% url 'update_part_type' part_type.id %}",
+            type: 'POST',
+            data: {
+                'name': $('#partTypeName').val(),
+                'csrfmiddlewaretoken': '{{ csrf_token }}'
+            },
+            success: function(json) {
+                $('h2').text($('#partTypeName').val());
+            },
+            error: function(xhr, errmsg, err) {
+                alert('Произошла ошибка при обновлении');
+            }
+        });
+    });
+$('#electrolyzers-table tbody').on('click', 'a.delete', function(e) {
+    e.preventDefault();
+
+    // Here you can show your modal window
+    $('#confirmDeleteModal').modal('show');
+
+    // Handle the delete event
+    var data = table.row($(this).parents('tr')).data();
+    $('#confirmDeleteButton').data('electrolyzer-id', data.id);  // store the electrolyzer id to the confirm button
+});
+
+$('#confirmDeleteButton').on('click', function() {
+    var electrolyzerId = $(this).data('electrolyzer-id');
+    $.ajax({
+        url: "/delete_electrolyzer/" + electrolyzerId + '/',  // replace with your actual URL
+        type: 'POST',
+        data: {
+            'csrfmiddlewaretoken': '{{ csrf_token }}'
+        },
+        success: function () {
+            $('#confirmDeleteModal').modal('hide');
+            table.ajax.reload();
+        },
+        error: function (xhr, errmsg, err) {
+            alert('Произошла ошибка при удалении');
+        }
+    });
+});
+
+});
+</script>
+{% endblock %}
+{% block extra_css %}
+    <style>
+    #electrolyzers-table tbody tr td:first-child a {
+        color: inherit; /* Использовать цвет по умолчанию */
+    }
+</style>
+{% endblock %}
+{% block content %}
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css"/>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    <h2>{{ part_type.name }}</h2>
+    <form id="part-type-edit-form" method="POST">
+    {% csrf_token %}
+    <div class="form-group">
+        <label for="partTypeName">Название типа:</label>
+        <input type="text" class="form-control" id="partTypeName" value="{{ part_type.name }}">
+    </div>
+    <button type="submit" class="btn btn-primary mt-3 mb-5">Обновить</button>
+</form>
+
+  <h3>Список электролизёров:</h3>
+    <table id="electrolyzers-table" class="table table-striped">
+    <thead>
+    <tr>
+        <th>Номер</th>
+        <th>Дата запуска</th>
+        <th>Дата сбоя</th>
+        <th>Дней в эксплуатации</th>
+        <th>Действия</th>
+    </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+
+    <div class="modal fade" id="confirmDeleteModal" tabindex="-1" role="dialog" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmDeleteModalLabel">Подтвердите удаление</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        Вы уверены, что хотите удалить этот электролизёр?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+        <button type="button" id="confirmDeleteButton" class="btn btn-danger">Удалить</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

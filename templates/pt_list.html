@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% block title %}Типы электролизёров{% endblock %}
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    var table = $('#part-types-table').DataTable({
+        ajax: {
+            url: "{% url 'get_part_types'%}",
+            dataSrc: ''
+        },
+        columns: [
+            { data: 'name',
+            render: function(data, type, row) {
+                return '<a href="/part_type/' + row.id + '">' + data + '</a>';
+            }
+            },
+            {
+                data: null,
+                defaultContent: '<a href="#" class="delete">Удалить</a>'
+            }
+        ]
+    });
+
+    $('#add-part-type-form').on('submit', function(event) {
+        event.preventDefault();
+
+        $.ajax({
+            url: "{% url 'add_part_type' %}",
+            type: 'POST',
+            data: {
+                'name': $('#partTypeName').val(),
+                'csrfmiddlewaretoken': '{{ csrf_token }}'
+            },
+            success: function() {
+                // Reload the DataTable to reflect the new part type
+                $('#part-types-table').DataTable().ajax.reload();
+            },
+            error: function() {
+                alert('Произошла ошибка при добавлении типа части');
+            }
+        });
+    });
+    $('#part-types-table tbody').on('click', 'a.delete', function(e) {
+    e.preventDefault();
+
+    // Here you can show your modal window
+    $('#confirmDeleteModal').modal('show');
+
+    // Handle the delete event
+    var data = table.row($(this).parents('tr')).data();
+    $('#confirmDeleteButton').data('part-type-id', data.id);  // store the part type id to the confirm button
+});
+
+$('#confirmDeleteButton').on('click', function() {
+    var partTypeId = $(this).data('part-type-id');
+    $.ajax({
+        url: "/delete_part_type/" + partTypeId + '/',  // replace with your actual URL
+        type: 'POST',
+        data: {
+            'csrfmiddlewaretoken': '{{ csrf_token }}'
+        },
+        success: function () {
+            $('#confirmDeleteModal').modal('hide');
+            table.ajax.reload();
+        },
+        error: function (xhr, errmsg, err) {
+            alert('Произошла ошибка при удалении');
+        }
+    });
+});
+});
+</script>
+{% endblock %}
+{% block extra_css %}
+    <style>
+    #part-types-table tbody tr td:first-child a {
+        color: inherit; /* Использовать цвет по умолчанию */
+    }
+</style>
+{% endblock %}
+{% block content %}
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css"/>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+<h2>Добавить тип</h2>
+    <form id="add-part-type-form" method="POST">
+    {% csrf_token %}
+    <div class="form-group">
+        <label for="partTypeName">Name:</label>
+        <input type="text" class="form-control" id="partTypeName">
+    </div>
+    <button type="submit" class="btn btn-primary mt-3 mb-3">Add</button>
+</form>
+
+<h2>Типы электролизёров</h2>
+<table id="part-types-table" class="table table-striped">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Действия</th>
+        </tr>
+    </thead>
+</table>
+
+        <!-- Confirm Delete Modal -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" role="dialog" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmDeleteModalLabel">Подтвердите удаление</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        Вы уверены, что хотите удалить этот тип электролизёра?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+        <button type="button" id="confirmDeleteButton" class="btn btn-danger">Удалить</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

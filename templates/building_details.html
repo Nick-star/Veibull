@@ -61,7 +61,7 @@ $(document).ready(function() {
         var electrolyzerId = $(this).data('electrolyzer-id');
 
         $.ajax({
-            url: "/delete_electrolyzer/" + electrolyzerId + '/',  // replace with your actual URL
+            url: "/delete_electrolyzer/" + electrolyzerId + '/',
             type: 'POST',
             data: {
                 'csrfmiddlewaretoken': '{{ csrf_token }}'

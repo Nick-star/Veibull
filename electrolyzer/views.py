@@ -255,3 +255,36 @@ def update_factory(request, factory_id):
         factory.name = name
         factory.save()
         return JsonResponse({'message': 'Завод успешно обновлен.'})
+
+def building_detail(request, pk):
+    building = get_object_or_404(Building, pk=pk)
+    return render(request, 'building_details.html', {'building': building})
+
+@csrf_exempt
+def update_building(request, building_id):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        building = Building.objects.get(id=building_id)
+        building.name = name
+        building.save()
+        return JsonResponse({'message': 'Здание успешно обновлено.'})
+
+def get_building_electrolyzers(request, building_id):
+    electrolyzers = Electrolyzer.objects.filter(building_id=building_id)
+    data = [{
+        'id': e.id,
+        'number': e.number,
+        'launch_date': e.launch_date,
+        'failure_date': e.failure_date,
+        'days_up': e.days_up,
+        'electrolyzer_type': e.electrolyzer_type.name,
+    } for e in electrolyzers]
+    return JsonResponse(data, safe=False)
+
+@csrf_exempt
+def delete_electrolyzer(request, electrolyzer_id):
+    if request.method == 'POST':
+        Electrolyzer.objects.filter(id=electrolyzer_id).delete()
+        return JsonResponse({'message': 'Электролизер успешно удален.'})
+    else:
+        return JsonResponse({'message': 'Неверный запрос'}, status=400)

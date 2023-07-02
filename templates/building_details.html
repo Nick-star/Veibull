@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% block title %}{{ building.name }}{% endblock %}
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    var table = $('#electrolyzers-table').DataTable({
+        ajax: {
+            url: "{% url 'get_building_electrolyzers' building.id %}",
+            dataSrc: ''
+        },
+        columns: [
+            { data: 'number' },
+            { data: 'launch_date' },
+            { data: 'failure_date' },
+            { data: 'days_up' },
+            { data: 'electrolyzer_type' },
+            {
+                data: null,
+                defaultContent: '<a href="#" class="delete">Удалить</a>'
+            }
+        ]
+    });
+
+    $('#building-edit-form').on('submit', function(event) {
+    event.preventDefault();
+
+    $.ajax({
+        url: "{% url 'update_building' building.id %}",
+        type: 'POST',
+        data: {
+            'name': $('#buildingName').val(),
+            'csrfmiddlewaretoken': '{{ csrf_token }}'
+        },
+        success: function(json) {
+            $('h2').text($('#buildingName').val());
+        },
+        error: function(xhr, errmsg, err) {
+            alert('Произошла ошибка при обновлении');
+        }
+    });
+});
+
+
+    $('#electrolyzers-table tbody').on('click', 'a.delete', function(e) {
+        e.preventDefault();
+
+        // Show the confirm delete modal
+        $('#confirmDeleteElectrolyzerModal').modal('show');
+
+        // Store the electrolyzer id to the confirm button
+        var data = table.row($(this).parents('tr')).data();
+        $('#confirmDeleteElectrolyzerButton').data('electrolyzer-id', data.id);
+    });
+
+    $('#confirmDeleteElectrolyzerButton').on('click', function() {
+        var electrolyzerId = $(this).data('electrolyzer-id');
+
+        $.ajax({
+            url: "/delete_electrolyzer/" + electrolyzerId + '/',  // replace with your actual URL
+            type: 'POST',
+            data: {
+                'csrfmiddlewaretoken': '{{ csrf_token }}'
+            },
+            success: function () {
+                $('#confirmDeleteElectrolyzerModal').modal('hide');
+                table.ajax.reload();
+            },
+            error: function (xhr, errmsg, err) {
+                alert('Произошла ошибка при удалении');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
+{% block content %}
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css"/>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    <h2>{{ building.name }}</h2>
+    <form id="building-edit-form" method="POST">
+    {% csrf_token %}
+    <div class="form-group">
+        <label for="buildingName">Название здания:</label>
+        <input type="text" class="form-control" id="buildingName" value="{{ building.name }}">
+    </div>
+    <button type="submit" class="btn btn-primary mt-3 mb-3">Обновить</button>
+</form>
+
+    <table id="electrolyzers-table" class="table table-striped">
+    <thead>
+    <tr>
+        <th>Номер</th>
+        <th>Дата запуска</th>
+        <th>Дата сбоя</th>
+        <th>Дней в эксплуатации</th>
+        <th>Тип электролизера</th>
+        <th>Действия</th>
+    </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+
+<div class="modal fade" id="confirmDeleteElectrolyzerModal" tabindex="-1" role="dialog" aria-labelledby="confirmDeleteElectrolyzerModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmDeleteElectrolyzerModalLabel">Подтвердите удаление</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        Вы уверены, что хотите удалить этот электролизер?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+        <button type="button" id="confirmDeleteElectrolyzerButton" class="btn btn-danger">Удалить</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

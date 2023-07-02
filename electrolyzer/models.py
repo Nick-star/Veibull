@@ -90,6 +90,4 @@ class Electrolyzer(models.Model):
         return (d - self.launch_date).days
 
     def __str__(self):
-        return f'Part(number={self.number}, launch_date={self.launch_date}, ' \
-               f'failure_date={self.failure_date}, days_up={self.days_up}, ' \
-               f'electrolyzer_type={self.electrolyzer_type}, building={self.building})'
+        return f'Тип={self.electrolyzer_type}, Строение={self.building}'

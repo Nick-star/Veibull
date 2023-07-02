@@ -9,7 +9,12 @@ $(document).ready(function() {
             dataSrc: ''
         },
         columns: [
-            { data: 'number' },
+            {
+                data: 'number',
+                render: function (data, type, row) {
+                    return '<a href="/edit-electrolyzer/' + row.id + '">' + data + '</a>';
+                }
+            },
             { data: 'launch_date' },
             { data: 'failure_date' },
             { data: 'days_up' },
@@ -73,6 +78,13 @@ $(document).ready(function() {
 });
 </script>
 {% endblock %}
+{% block extra_css %}
+    <style>
+    #electrolyzers-table tbody tr td:first-child a {
+        color: inherit; /* Использовать цвет по умолчанию */
+    }
+</style>
+{% endblock %}
 {% block content %}
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css"/>
     <script type="text/javascript" src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
@@ -84,9 +96,10 @@ $(document).ready(function() {
         <label for="buildingName">Название здания:</label>
         <input type="text" class="form-control" id="buildingName" value="{{ building.name }}">
     </div>
-    <button type="submit" class="btn btn-primary mt-3 mb-3">Обновить</button>
+    <button type="submit" class="btn btn-primary mt-3 mb-5">Обновить</button>
 </form>
 
+    <h3>Список электролизёров:</h3>
     <table id="electrolyzers-table" class="table table-striped">
     <thead>
     <tr>
